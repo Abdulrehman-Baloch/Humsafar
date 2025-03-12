@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   provider: ^6.0.5
-
+  carousel_slider: ^4.1.1
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -67,6 +67,134 @@ flutter:
     - images/bg3.jpg
     - images/img1.jpg
   #   - images/a_dot_ham.jpeg
+    -  images/seren.jpeg
+    -  images/serena_shigar.jpeg
+    -  images/shangrila.jpeg
+    -  images/JJHotel_ISL.jpeg
+    -  images/avariKhi.jpeg
+    -  images/f7GH.jpeg
+    -  images/hotelMehranKhi.jpeg
+    -  images/hunzaembassy.jpeg
+    -  images/lahorebackpack.jpeg
+    -  images/marriot.jpeg
+    -  images/movenpick.jpeg
+    -  images/nishatLahore.jpeg
+    -  images/oldHunzaInn.jpeg
+    -  images/PCLahore.jpg
+    -  images/ptdcGilgit.jpeg
+    -  images/ptdcSkardu.jpeg
+    -  images/rockCitySwat.jpeg
+    -  images/serenaGilgit.jpeg
+    -  images/serenaHunza.jpeg
+    -  images/serenaSwat.jpeg
+    -  images/threeStarHotelSwat.jpeg
+    -  images/bloomstarQuetta.jpeg
+    -  images/PCBhurban.jpeg
+    -  images/hotelsmartmultan.jpeg
+    -  images/ramadaMultan.jpeg
+    -  images/PCGwadar.jpeg
+    -  images/sheltonPeshawar.jpeg
+    -  images/alqaramMurree.jpeg
+    -  images/metroHotelQuetta.jpeg
+    -  images/askaniGwadar.jpeg
+    -  images/PCPeshawar.jpeg
+    -  images/serenaQuetta.jpeg
+    -  images/greenHotelMurree.jpg
+    -  images/fortroadMultan.jpeg
+    -  images/acc.jpeg
+    -  images/serena_shigar1.jpeg
+    -  images/serena_shigar2.jpeg
+    -  images/serena_shigar3.jpeg
+    -  images/accommodation.jpeg
+    -  images/shangrila1.jpeg
+    -  images/shangrila2.jpeg
+    -  images/shangrila3.jpeg
+    -  images/fortroad1.jpeg
+    -  images/fortroad2.jpeg
+    -  images/fortroad3.jpeg
+    -  images/jjhotel1.jpeg
+    -  images/jjhotel2.jpeg
+    -  images/jjhotel3.jpeg
+    -  images/envcont1.jpeg
+    -  images/envcont2.jpeg
+    -  images/envcont3.jpeg
+    -  images/greenview1.jpeg
+    -  images/greenview2.jpeg
+    -  images/greenview3.jpeg
+    -  images/serenaquetta1.jpeg
+    -  images/serenaquetta2.jpeg
+    -  images/serenaquetta3.jpeg
+    -  images/pcpeshawar1.jpeg
+    -  images/pcpeshawar2.jpeg
+    -  images/pcpeshawar3.jpeg
+    -  images/askani1.jpeg
+    -  images/askani2.jpeg
+    -  images/askani3.jpeg
+    -  images/mehran1.jpeg
+    -  images/mehran2.jpeg
+    -  images/mehran3.jpeg
+    -  images/ptdcgilgit1.jpeg
+    -  images/ptdcgilgit2.jpeg
+    -  images/ptdcgilgit3.jpeg
+    -  images/pclahore1.jpeg
+    -  images/pclahore2.jpeg
+    -  images/pclahore3.jpeg
+    -  images/lahorebp1.jpeg
+    -  images/lahorebp2.jpeg
+    -  images/lahorebp3.jpeg
+    -  images/metroquetta1.jpeg
+    -  images/metroquetta2.jpeg
+    -  images/metroquetta3.jpeg
+    -  images/alqamar1.jpeg
+    -  images/alqamar2.jpeg
+    -  images/alqamar3.jpeg
+    -  images/serenagilgit1.jpeg
+    -  images/serenagilgit2.jpeg
+    -  images/serenagilgit3.jpeg
+    -  images/rockcity1.jpeg
+    -  images/rockcity2.jpeg
+    -  images/rockcity3.jpeg
+    -  images/nishat1.jpeg
+    -  images/nishat2.jpeg
+    -  images/nishat3.jpeg
+    -  images/hotelgraceinn.jpg
+    -  images/hotelgrace1.jpg
+    -  images/hotelgrace2.jpg
+    -  images/hotelgrace3.jpg
+    -  images/oldhunza1.jpeg
+    -  images/oldhunza2.jpeg
+    -  images/oldhunza3.jpeg
+    -  images/marriot1.jpeg
+    -  images/marriot2.jpeg
+    -  images/marriot3.jpeg
+    -  images/serenaswat1.jpeg
+    -  images/serenaswat2.jpeg
+    -  images/serenaswat3.jpeg
+    -  images/movenpick1.jpeg
+    -  images/movenpick2.jpeg
+    -  images/movenpick3.jpeg
+    -  images/avari1.jpeg
+    -  images/avari2.jpeg
+    -  images/avari3.jpeg
+    -  images/serenahunza1.jpeg
+    -  images/serenahunza2.jpeg
+    -  images/serenahunza3.jpeg
+    -  images/serenaisl1.jpeg
+    -  images/serenaisl2.jpeg
+    -  images/serenaisl3.jpeg
+    -  images/hotelsmart1.jpeg
+    -  images/hotelsmart2.jpeg
+    -  images/hotelsmart3.jpeg
+    -  images/f71.jpeg
+    -  images/f72.jpg
+    -  images/f73.jpeg
+    -  images/pcbhurban1.jpeg
+    -  images/pcbhurban2.jpeg
+    -  images/pcbhurban3.jpeg
+    -  images/bloomstar1.jpeg
+    -  images/bloomstar2.jpeg
+    -  images/bloomstar3.jpeg
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

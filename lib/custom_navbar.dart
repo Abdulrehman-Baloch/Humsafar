@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'navigation_provider.dart';
+import 'find_accommodation.dart';
 
 class NavigationBar extends StatelessWidget {
   const NavigationBar({super.key});
@@ -54,6 +55,10 @@ class NavigationBar extends StatelessWidget {
           // Navigate to Lists screen
         } else if (index == 2) {
           // Navigate to Accommodation search
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => FindAccommodationScreen()),
+          );
         } else if (index == 3) {
           // Navigate to Transportation search
         } else if (index == 4) {
