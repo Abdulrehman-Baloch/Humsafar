@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'custom_navbar.dart' as custom;
+import 'add_to_existing_plan.dart';
+import 'create_trip_plan.dart';
 
 class ViewDestinationScreen extends StatelessWidget {
   final String destinationID;
@@ -392,7 +394,16 @@ class ViewDestinationScreen extends StatelessWidget {
         children: [
           ElevatedButton(
             onPressed: () {
-              // Create trip plan functionality
+              // Navigate to CreateTripPlanScreen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CreateTripPlanScreen(
+                    destinationID: destinationID,
+                    destinationName: name,
+                  ),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
@@ -413,7 +424,16 @@ class ViewDestinationScreen extends StatelessWidget {
           SizedBox(height: 12),
           OutlinedButton(
             onPressed: () {
-              // Add to existing trip plan functionality
+              // Navigate to AddDestinationToExistingTripScreen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddDestinationToExistingTripScreen(
+                    destinationID: destinationID,
+                    destinationName: name,
+                  ),
+                ),
+              );
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.black,
