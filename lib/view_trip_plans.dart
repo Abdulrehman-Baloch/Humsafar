@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:humsafar_app/view_destination.dart';
 import 'package:intl/intl.dart';
 import 'view_trip_details.dart';
 import 'home.dart';
@@ -182,7 +181,7 @@ class _ViewTripPlansScreenState extends State<ViewTripPlansScreen> {
                                 Text(
                                   '${_formatDate(startDate)} - ${_formatDate(endDate)}',
                                   style: const TextStyle(
-                                    color: Colors.grey,
+                                    color: Color.fromARGB(255, 20, 4, 4),
                                   ),
                                 ),
                               ],
@@ -197,7 +196,7 @@ class _ViewTripPlansScreenState extends State<ViewTripPlansScreen> {
                                 Text(
                                   '$numberOfTravelers ${numberOfTravelers == 1 ? 'Traveler' : 'Travelers'}',
                                   style: const TextStyle(
-                                    color: Colors.grey,
+                                    color: Color.fromARGB(255, 20, 4, 4),
                                   ),
                                 ),
                               ],

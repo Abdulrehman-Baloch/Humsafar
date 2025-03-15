@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:humsafar_app/home.dart';
+import 'bookAccommodation.dart';
+import 'book_transportation.dart';
 import 'package:intl/intl.dart';
 
 class TripPlanDetailsScreen extends StatefulWidget {
@@ -44,12 +46,36 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
             .collection('tripDestinations')
             .get();
 
-        final destinations = destinationsSnapshot.docs
-            .map((doc) => {
-                  ...doc.data(),
-                  'id': doc.id,
-                })
-            .toList();
+        final List<Map<String, dynamic>> destinations = [];
+
+        for (var destinationDoc in destinationsSnapshot.docs) {
+          final destinationData = destinationDoc.data();
+          final destinationId = destinationDoc.id;
+
+          // Fetch transport bookings for this destination
+          final transportSnapshot = await FirebaseFirestore.instance
+              .collection('tripPlans')
+              .doc(widget.tripPlanId)
+              .collection('tripDestinations')
+              .doc(destinationId)
+              .collection('transportation')
+              .get();
+
+          // Store transport bookings in a list
+          final transportBookings = transportSnapshot.docs
+              .map((doc) => {
+                    ...doc.data(),
+                    'id': doc.id, // Include transport document ID
+                  })
+              .toList();
+
+          // Add transport bookings to the destination
+          destinations.add({
+            ...destinationData,
+            'id': destinationId,
+            'transportBookings': transportBookings,
+          });
+        }
 
         setState(() {
           _tripData = tripDoc.data();
@@ -355,7 +381,7 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
   }
 
   Widget _buildDestinationTile(Map<String, dynamic> destination) {
-    //final destinationId = destination['id'] as String;
+    final destinationId = destination['id'] as String;
     final destinationName = destination['destinationName'] as String;
     final startDate = destination['startDate'] as Timestamp;
     final endDate = destination['endDate'] as Timestamp;
@@ -474,32 +500,35 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                         minimumSize: const Size(0, 32),
                       ),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  'Add booking for $destinationName coming soon')),
-                        );
+                        _showAddOptions(context, destination);
                       },
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12.0),
-                    child: Text(
-                      'No booking information added for this destination yet',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
+                destination['transportBookings'] == null ||
+                        destination['transportBookings'].isEmpty
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12.0),
+                          child: Text(
+                            'No booking information added for this destination yet',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Column(
+                        children: destination['transportBookings']
+                            .map<Widget>(
+                                (transport) => _buildTransportCard(transport))
+                            .toList(),
                       ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
-
           // Destination actions
           Padding(
             padding:
@@ -533,6 +562,154 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildTransportCard(Map<String, dynamic> transport) {
+    return Card(
+      margin: const EdgeInsets.only(top: 10),
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${transport['company']} - ${transport['transportType']}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${transport['price']} PKR',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.location_on, size: 16, color: Colors.red),
+                const SizedBox(width: 4),
+                Text(
+                  '${transport['departure']} → ${transport['destination']}',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.access_time, size: 16, color: Colors.blue),
+                const SizedBox(width: 4),
+                Text(
+                  'Departure: ${(transport['departureTime'])}',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddOptions(BuildContext context, Map<String, dynamic> destination) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "What would you like to add?",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+
+              // Add Transportation Button
+              ElevatedButton.icon(
+                icon: const Icon(Icons.directions_bus),
+                label: const Text("Add Transportation"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 40),
+                ),
+                onPressed: () async {
+                  Navigator.pop(context); // Close bottom sheet
+                  final bookedTransport = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookTransportationScreen(
+                        destinationCity: destination['destinationName'],
+                        tripPlanID: widget.tripPlanId,
+                        destinationID: destination['id'],
+                      ),
+                    ),
+                  );
+
+                  // If transport was booked, add it to UI
+                  if (bookedTransport != null) {
+                    _addTransportToDestination(
+                        destination['id'], bookedTransport);
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+
+              // Add Accommodation Button
+              // ElevatedButton.icon(
+              //   icon: const Icon(Icons.hotel),
+              //   label: const Text("Add Accommodation"),
+              //   style: ElevatedButton.styleFrom(
+              //     backgroundColor: Colors.green,
+              //     foregroundColor: Colors.white,
+              //     minimumSize: const Size(double.infinity, 40),
+              //   ),
+              //   onPressed: () {
+              //     Navigator.pop(context); // Close bottom sheet
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (context) => bookAccommodation(),
+              //       ),
+              //     );
+              //   },
+              // ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _addTransportToDestination(
+      String destinationId, Map<String, dynamic> bookedTransport) {
+    setState(() {
+      for (var destination in _destinations) {
+        if (destination['id'] == destinationId) {
+          destination['transportBookings'] ??= [];
+          destination['transportBookings'].add(bookedTransport);
+          break;
+        }
+      }
+    });
   }
 
   Future<void> _toggleTripStatus() async {

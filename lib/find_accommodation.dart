@@ -4,6 +4,8 @@ import 'bookAccommodation.dart';
 import 'custom_navbar.dart' as cn; // Import your custom NavigationBar
 
 class FindAccommodationScreen extends StatefulWidget {
+  const FindAccommodationScreen({super.key});
+
   @override
   _FindAccommodationScreenState createState() =>
       _FindAccommodationScreenState();

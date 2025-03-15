@@ -132,7 +132,7 @@ class WelcomeScreen extends StatelessWidget {
                               elevation: 2,
                             ),
                             child: const Text(
-                              'Already have an account? Sign in',
+                              'Already have an account? Login',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,

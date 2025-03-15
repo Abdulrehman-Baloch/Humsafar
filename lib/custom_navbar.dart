@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'navigation_provider.dart';
 import 'find_accommodation.dart';
 import 'view_trip_plans.dart';
+import 'search_transportation.dart';
+import 'welcome.dart';
 
 class NavigationBar extends StatelessWidget {
   const NavigationBar({super.key});
@@ -67,8 +69,17 @@ class NavigationBar extends StatelessWidget {
           );
         } else if (index == 3) {
           // Navigate to Transportation search
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => SearchTransportationScreen()));
         } else if (index == 4) {
-          // Handle logout
+          Navigator.pushAndRemoveUntil(
+            // Navigate to Welcome screen
+            context,
+            MaterialPageRoute(builder: (context) => WelcomeScreen()),
+            (route) => false,
+          );
         }
       },
       child: Padding(
