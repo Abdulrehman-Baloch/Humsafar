@@ -1,10 +1,29 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'custom_navbar.dart' as custom;
-import 'view_destination.dart'; // Import the ViewDestinationScreen
+import 'view_destination.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // State variable for search query
+  String searchQuery = '';
+  final TextEditingController searchController = TextEditingController();
+
+  // Use this to control the overall list height
+  final double _gridHeight = 600; // Adjust based on your needs
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed
+    searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +41,7 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeaderSection(context),
+                    _buildSearchSection(context),
                     _buildDiscoverySection(context),
                   ],
                 ),
@@ -77,57 +97,279 @@ class HomeScreen extends StatelessWidget {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 10),
-          StreamBuilder(
-            stream: FirebaseFirestore.instance
-                .collection('destinations')
-                .snapshots(),
-            builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return Center(child: Text('No destinations found'));
-              }
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 3 / 2,
-                ),
-                itemCount: snapshot.data!.docs.length,
-                itemBuilder: (context, index) {
-                  var doc = snapshot.data!.docs[index];
-                  Map<String, dynamic> data =
-                      doc.data() as Map<String, dynamic>;
+          SizedBox(
+            height: _gridHeight, // Fixed height container
+            child: StreamBuilder(
+              stream: FirebaseFirestore.instance
+                  .collection('destinations')
+                  .snapshots(),
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return _buildEmptyState('No destinations found');
+                }
 
-                  // Get required data
-                  String imageUrl = data['imageUrl'] ?? 'images/img1.jpg';
-                  String name = data['name'] ?? 'Unknown';
-                  double rating = (data['rating'] ?? 0.0).toDouble();
+                // Filter documents based on search query
+                var filteredDocs = snapshot.data!.docs;
+                if (searchQuery.isNotEmpty) {
+                  filteredDocs = filteredDocs.where((doc) {
+                    Map<String, dynamic> data =
+                        doc.data() as Map<String, dynamic>;
+                    String name = (data['name'] ?? '').toString().toLowerCase();
 
-                  // Get document ID for the destination
-                  String destinationID = doc.id;
+                    // Search by name
+                    bool matchesName = name.contains(searchQuery.toLowerCase());
 
-                  return _buildDestinationCard(
-                    context,
-                    destinationID,
-                    imageUrl,
-                    name,
-                    rating,
-                  );
-                },
-              );
-            },
+                    // Search by keywords
+                    bool matchesKeywords = false;
+                    if (data.containsKey('searchKeywords')) {
+                      List<String> keywords =
+                          List<String>.from(data['searchKeywords'] ?? []);
+                      matchesKeywords = keywords.any((keyword) => keyword
+                          .toLowerCase()
+                          .contains(searchQuery.toLowerCase()));
+                    }
+
+                    // Return true if either condition is met
+                    return matchesName || matchesKeywords;
+                  }).toList();
+                }
+                // If no results after filtering
+                if (filteredDocs.isEmpty) {
+                  return _buildEmptyState(
+                      'No destinations found for your search');
+                }
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics:
+                      const AlwaysScrollableScrollPhysics(), // Changed from NeverScrollableScrollPhysics
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 3 / 2,
+                  ),
+                  itemCount: filteredDocs.length,
+                  itemBuilder: (context, index) {
+                    var doc = filteredDocs[index];
+                    Map<String, dynamic> data =
+                        doc.data() as Map<String, dynamic>;
+
+                    String imageUrl = data['imageUrl'] ?? 'images/img1.jpg';
+                    String name = data['name'] ?? 'Unknown';
+                    double rating = (data['rating'] ?? 0.0).toDouble();
+                    String destinationID = doc.id;
+
+                    return _buildDestinationCard(
+                      context,
+                      destinationID,
+                      imageUrl,
+                      name,
+                      rating,
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Add this method to create a destination card with navigation
+  // Helper method to create consistent empty state UI
+  Widget _buildEmptyState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 48, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              message,
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchSection(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        children: [
+          // Search box - takes most of the space
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: searchController, // Use the class-level controller
+                decoration: InputDecoration(
+                  hintText: 'Search destinations...',
+                  prefixIcon: const Icon(Icons.search, color: Colors.black54),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                onSubmitted: (value) {
+                  setState(() {
+                    searchQuery = value;
+                  });
+                },
+              ),
+            ),
+          ),
+          // Search button
+          SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.search, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  searchQuery = searchController.text;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, bool isSelected) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (selected) {
+          // Handle filter selection
+        },
+        backgroundColor: Colors.white,
+        selectedColor: Colors.black,
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : Colors.black,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.grey[300]!),
+        ),
+      ),
+    );
+  }
+
+  void _showFilterDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Filter Options'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Price Range',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                RangeSlider(
+                  values: const RangeValues(100, 1000),
+                  min: 0,
+                  max: 2000,
+                  divisions: 20,
+                  labels: const RangeLabels('\$100', '\$1000'),
+                  onChanged: (RangeValues values) {
+                    // Update price range
+                  },
+                ),
+                const SizedBox(height: 15),
+                const Text('Rating',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(5, (index) {
+                    return GestureDetector(
+                      onTap: () {
+                        // Handle star rating selection
+                      },
+                      child: Icon(
+                        Icons.star,
+                        color: index < 4 ? Colors.amber : Colors.grey,
+                        size: 30,
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 15),
+                const Text('Categories',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 8.0,
+                  children: [
+                    _buildFilterChip('Beach', false),
+                    _buildFilterChip('Mountain', false),
+                    _buildFilterChip('City', true),
+                    _buildFilterChip('Historical', false),
+                    _buildFilterChip('Adventure', false),
+                    _buildFilterChip('Cultural', false),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('APPLY'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildDestinationCard(
     BuildContext context,
     String destinationID,
@@ -170,14 +412,12 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          // Added padding around the button to separate it from the card
           Padding(
             padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 8.0),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to the ViewDestinationScreen with all required parameters
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -212,11 +452,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Helper method for building image
   Widget _buildImage(String imageUrl) {
-    // Check if the image URL is a network URL or an asset
     if (imageUrl.startsWith('http')) {
-      // Network image
       return Image.network(
         imageUrl,
         fit: BoxFit.cover,
@@ -240,7 +477,6 @@ class HomeScreen extends StatelessWidget {
         },
       );
     } else {
-      // Local asset image
       return Image.asset(
         imageUrl,
         fit: BoxFit.cover,
