@@ -6,7 +6,7 @@ import 'find_accommodation.dart';
 class bookAccommodation extends StatelessWidget {
   final Map<String, dynamic> accommodation;
 
-  bookAccommodation({required this.accommodation});
+  const bookAccommodation({super.key, required this.accommodation});
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +139,7 @@ class bookAccommodation extends StatelessWidget {
                                 loadingBuilder:
                                     (context, child, loadingProgress) {
                                   if (loadingProgress == null) return child;
-                                  return Container(
+                                  return SizedBox(
                                     width: imageWidth,
                                     height: 220,
                                     child: Center(

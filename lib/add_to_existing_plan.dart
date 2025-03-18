@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'trip_timeline.dart';
 
 class AddDestinationToExistingTripScreen extends StatefulWidget {
   final String destinationID;
@@ -94,7 +95,7 @@ class _AddDestinationToExistingTripScreenState
   }
 
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {
-    // Get trip plan dates for validation
+    // We'll keep trip dates as reference but allow selection outside these dates
     DateTime? tripStartDate, tripEndDate;
 
     if (_selectedTripPlan != null) {
@@ -111,10 +112,11 @@ class _AddDestinationToExistingTripScreenState
                   ? _startDate!.add(const Duration(days: 1))
                   : tripStartDate ?? DateTime.now())),
       firstDate: isStartDate
-          ? tripStartDate ?? DateTime.now() // Can't start before trip start
-          : (_startDate ?? tripStartDate ?? DateTime.now()),
-      lastDate:
-          tripEndDate ?? DateTime.now().add(const Duration(days: 365 * 2)),
+          ? DateTime.now().subtract(
+              const Duration(days: 365)) // Allow past dates within reason
+          : (_startDate ?? DateTime.now()), // End date must be after start date
+      lastDate: DateTime.now()
+          .add(const Duration(days: 365 * 5)), // Allow planning far in advance
     );
 
     if (picked != null) {
@@ -164,6 +166,92 @@ class _AddDestinationToExistingTripScreenState
     });
   }
 
+  // Add this function to check for date overlaps with existing destinations
+  Future<bool> _checkForDateOverlaps(
+      DateTime startDate, DateTime endDate) async {
+    try {
+      // Get all existing destinations in the selected trip plan
+      final destinationsSnapshot = await FirebaseFirestore.instance
+          .collection('tripPlans')
+          .doc(_selectedTripPlanId)
+          .collection('tripDestinations')
+          .get();
+
+      // List to store any overlapping destinations for reporting to the user
+      List<String> overlappingDestinations = [];
+
+      // Check each destination for date overlaps
+      for (final doc in destinationsSnapshot.docs) {
+        final destData = doc.data();
+        final destName = destData['destinationName'] as String;
+        final destStartDate = (destData['startDate'] as Timestamp).toDate();
+        final destEndDate = (destData['endDate'] as Timestamp).toDate();
+
+        // Check if dates overlap - the complex condition covers all overlap scenarios
+        if ((startDate.isBefore(destEndDate) ||
+                startDate.isAtSameMomentAs(destEndDate)) &&
+            (endDate.isAfter(destStartDate) ||
+                endDate.isAtSameMomentAs(destStartDate))) {
+          // Format dates for readable error message
+          final startDateStr = DateFormat('MMM dd').format(destStartDate);
+          final endDateStr = DateFormat('MMM dd').format(destEndDate);
+          overlappingDestinations
+              .add('$destName ($startDateStr - $endDateStr)');
+        }
+      }
+
+      // If any overlaps were found, show error message with details
+      if (overlappingDestinations.isNotEmpty) {
+        String errorMessage =
+            'Date overlap detected with:\n• ${overlappingDestinations.join('\n• ')}';
+
+        // Show dialog with detailed information
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Cannot Add Destination'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'You cannot be in two places at the same time!',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(errorMessage),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Please choose different dates that don\'t overlap with existing destinations.',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('OK'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            );
+          },
+        );
+        return true; // Overlap exists
+      }
+
+      return false; // No overlap
+    } catch (e) {
+      // Handle any errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error checking date overlaps: $e')),
+      );
+      return true; // Return true to prevent saving on error
+    }
+  }
+
   Future<void> _addDestinationToTripPlan() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -175,6 +263,18 @@ class _AddDestinationToExistingTripScreenState
     }
 
     try {
+      // Check for overlapping dates before proceeding
+      setState(() => _isLoading = true);
+
+      // Check if the selected dates overlap with any existing destination
+      bool hasOverlap = await _checkForDateOverlaps(_startDate!, _endDate!);
+
+      if (hasOverlap) {
+        setState(() => _isLoading = false);
+        return; // Stop here if there are overlaps
+      }
+
+      // Proceed with adding the destination as before...
       // Add this destination to the selected trip plan
       final destinationData = {
         'destinationID': widget.destinationID,
@@ -193,13 +293,76 @@ class _AddDestinationToExistingTripScreenState
           .collection('tripDestinations')
           .add(destinationData);
 
-      // Update the trip plan's "updatedAt" field
-      await FirebaseFirestore.instance
+      // Fetch all destinations in the trip plan including the newly added one
+      final destinationsSnapshot = await FirebaseFirestore.instance
           .collection('tripPlans')
           .doc(_selectedTripPlanId)
-          .update({
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+          .collection('tripDestinations')
+          .get();
+
+      // Find earliest start date and latest end date among all destinations
+      DateTime? earliestStartDate;
+      DateTime? latestEndDate;
+
+      for (final doc in destinationsSnapshot.docs) {
+        final destData = doc.data();
+        final destStartDate = (destData['startDate'] as Timestamp).toDate();
+        final destEndDate = (destData['endDate'] as Timestamp).toDate();
+
+        if (earliestStartDate == null ||
+            destStartDate.isBefore(earliestStartDate)) {
+          earliestStartDate = destStartDate;
+        }
+
+        if (latestEndDate == null || destEndDate.isAfter(latestEndDate)) {
+          latestEndDate = destEndDate;
+        }
+      }
+
+      // Only update trip dates if destinations exist and dates have changed
+      if (earliestStartDate != null && latestEndDate != null) {
+        // Get current trip dates for comparison
+        final tripData = await FirebaseFirestore.instance
+            .collection('tripPlans')
+            .doc(_selectedTripPlanId)
+            .get();
+
+        final currentTripStartDate =
+            (tripData['startDate'] as Timestamp).toDate();
+        final currentTripEndDate = (tripData['endDate'] as Timestamp).toDate();
+
+        // Check if trip dates need updating
+        final needsUpdate =
+            earliestStartDate.compareTo(currentTripStartDate) != 0 ||
+                latestEndDate.compareTo(currentTripEndDate) != 0;
+
+        if (needsUpdate) {
+          // Calculate new total days
+          final totalDays =
+              latestEndDate.difference(earliestStartDate).inDays + 1;
+
+          // Update the trip plan with new dates
+          await FirebaseFirestore.instance
+              .collection('tripPlans')
+              .doc(_selectedTripPlanId)
+              .update({
+            'startDate': Timestamp.fromDate(earliestStartDate),
+            'endDate': Timestamp.fromDate(latestEndDate),
+            'totalDays': totalDays,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Just update the timestamp
+          await FirebaseFirestore.instance
+              .collection('tripPlans')
+              .doc(_selectedTripPlanId)
+              .update({
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+
+      setState(() => _isLoading = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -208,6 +371,7 @@ class _AddDestinationToExistingTripScreenState
 
       Navigator.pop(context);
     } catch (e) {
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error adding destination: $e')),
       );
@@ -317,29 +481,121 @@ class _AddDestinationToExistingTripScreenState
                           },
                         ),
 
+                      // In the build method, after the _selectedTripPlan card, add:
                       if (_selectedTripPlan != null) ...[
-                        const SizedBox(height: 8),
-                        Card(
-                          color: const Color.fromARGB(255, 245, 245, 245),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Trip: ${_selectedTripPlan!['name']}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Duration: ${_selectedTripPlan!['totalDays']} days with ${_selectedTripPlan!['numberOfTravelers']} travelers',
-                                ),
-                              ],
-                            ),
+                        const SizedBox(height: 16),
+                        ExpansionTile(
+                          title: const Text(
+                            'View Existing Destinations',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w500),
                           ),
+                          subtitle: const Text('Check available dates'),
+                          leading: const Icon(Icons.date_range),
+                          children: [
+                            FutureBuilder<QuerySnapshot>(
+                              future: FirebaseFirestore.instance
+                                  .collection('tripPlans')
+                                  .doc(_selectedTripPlanId)
+                                  .collection('tripDestinations')
+                                  .orderBy('startDate')
+                                  .get(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: Center(
+                                        child: CircularProgressIndicator()),
+                                  );
+                                }
+
+                                if (snapshot.hasError) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Text('Error: ${snapshot.error}'),
+                                  );
+                                }
+
+                                if (!snapshot.hasData ||
+                                    snapshot.data!.docs.isEmpty) {
+                                  return const Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: Text(
+                                        'No destinations in this trip yet'),
+                                  );
+                                }
+
+                                // Show list of existing destinations with their dates
+                                return ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: snapshot.data!.docs.length,
+                                  itemBuilder: (context, index) {
+                                    final doc = snapshot.data!.docs[index];
+                                    final data =
+                                        doc.data() as Map<String, dynamic>;
+                                    final name =
+                                        data['destinationName'] as String;
+                                    final startDate =
+                                        (data['startDate'] as Timestamp)
+                                            .toDate();
+                                    final endDate =
+                                        (data['endDate'] as Timestamp).toDate();
+
+                                    return ListTile(
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 24),
+                                      title: Text(name),
+                                      subtitle: Text(
+                                          '${DateFormat('MMM dd').format(startDate)} - ${DateFormat('MMM dd').format(endDate)} (${data['daysOfStay']} days)'),
+                                      dense: true,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ],
+                      const SizedBox(height: 16),
+                      FutureBuilder<QuerySnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('tripPlans')
+                            .doc(_selectedTripPlanId)
+                            .collection('tripDestinations')
+                            .get(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                                  ConnectionState.waiting ||
+                              !snapshot.hasData ||
+                              _selectedTripPlan == null) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final destinations = snapshot.data!.docs.map((doc) {
+                            return doc.data() as Map<String, dynamic>;
+                          }).toList();
+
+                          final tripStartDate =
+                              (_selectedTripPlan!['startDate'] as Timestamp)
+                                  .toDate();
+                          final tripEndDate =
+                              (_selectedTripPlan!['endDate'] as Timestamp)
+                                  .toDate();
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: TripCalendarTimeline(
+                              tripStartDate: tripStartDate,
+                              tripEndDate: tripEndDate,
+                              destinations: destinations,
+                            ),
+                          );
+                        },
+                      ),
+ 
                       const SizedBox(height: 24),
 
                       // Stay Details section
@@ -403,17 +659,18 @@ class _AddDestinationToExistingTripScreenState
                       const SizedBox(height: 8),
 
                       // Days of stay (calculated)
-                      if (_daysOfStay > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            'Duration at this destination: $_daysOfStay days',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: Colors.blue[800],
-                            ),
-                          ),
-                        ),
+                      _daysOfStay > 0
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                'Duration at this destination: $_daysOfStay days',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.blue[800],
+                                ),
+                              ),
+                            )
+                          : SizedBox.shrink(),
                       const SizedBox(height: 24),
 
                       // Notes

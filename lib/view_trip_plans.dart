@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:humsafar_app/view_destination.dart';
 import 'package:intl/intl.dart';
 import 'view_trip_details.dart';
 import 'home.dart';

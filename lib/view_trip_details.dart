@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:humsafar_app/home.dart';
 import 'package:intl/intl.dart';
+import 'trip_timeline.dart';
+import 'edit_trip_plan.dart';
+import 'edit_trip_destination.dart';
 
 class TripPlanDetailsScreen extends StatefulWidget {
   final String tripPlanId;
@@ -21,10 +24,12 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _tripData;
   List<Map<String, dynamic>> _destinations = [];
+  late String _currentTripName;
 
   @override
   void initState() {
     super.initState();
+    _currentTripName = widget.tripName;
     _fetchTripDetails();
   }
 
@@ -51,8 +56,44 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                 })
             .toList();
 
+        // Sort destinations by start date
+        destinations.sort((a, b) {
+          final aDate = (a['startDate'] as Timestamp).toDate();
+          final bDate = (b['startDate'] as Timestamp).toDate();
+          return aDate.compareTo(bDate);
+        });
+
+        // Update trip dates based on destinations if there are any
+        if (destinations.isNotEmpty) {
+          // Get the earliest start date and latest end date
+          final earliestStartDate =
+              (destinations.first['startDate'] as Timestamp).toDate();
+          final latestEndDate =
+              (destinations.last['endDate'] as Timestamp).toDate();
+
+          // Calculate total days
+          final difference =
+              latestEndDate.difference(earliestStartDate).inDays + 1;
+
+          // Update the trip dates in Firestore
+          await FirebaseFirestore.instance
+              .collection('tripPlans')
+              .doc(widget.tripPlanId)
+              .update({
+            'startDate': Timestamp.fromDate(earliestStartDate),
+            'endDate': Timestamp.fromDate(latestEndDate),
+            'totalDays': difference,
+          });
+
+          // Update the trip data with the new dates
+          _tripData = {...tripDoc.data()!};
+          _tripData!['startDate'] = Timestamp.fromDate(earliestStartDate);
+          _tripData!['endDate'] = Timestamp.fromDate(latestEndDate);
+          _tripData!['totalDays'] = difference;
+        }
+
         setState(() {
-          _tripData = tripDoc.data();
+          _tripData = _tripData ?? tripDoc.data();
           _destinations = destinations;
           _isLoading = false;
         });
@@ -77,6 +118,73 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
     return DateFormat('MMMM dd, yyyy').format(date);
   }
 
+  Future<void> _navigateToEditDestinationScreen(
+      Map<String, dynamic> destination) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditDestinationScreen(
+          tripPlanId: widget.tripPlanId,
+          destinationId: destination['id'],
+          destinationData: destination,
+        ),
+      ),
+    );
+
+    // Handle the result when returning from edit screen
+    if (result != null && result['updated'] == true) {
+      // Refresh trip details
+      _fetchTripDetails();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Destination updated successfully')),
+      );
+    }
+  }
+
+  Future<void> _navigateToEditScreen() async {
+    if (_tripData == null) return;
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditTripPlanScreen(
+          tripPlanId: widget.tripPlanId,
+          tripData: _tripData!,
+          tripName: _currentTripName,
+        ),
+      ),
+    );
+
+    // Handle the result when returning from edit screen
+    if (result != null && result['updated'] == true) {
+      setState(() {
+        _currentTripName = result['name'];
+      });
+      // Refresh trip details
+      _fetchTripDetails();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Trip updated successfully')),
+      );
+    }
+  }
+
+  // New method to build the trip timeline widget
+  Widget _buildTripTimeline() {
+    if (_tripData == null) return const SizedBox.shrink();
+
+    final startDate = (_tripData!['startDate'] as Timestamp).toDate();
+    final endDate = (_tripData!['endDate'] as Timestamp).toDate();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: TripCalendarTimeline(
+        tripStartDate: startDate,
+        tripEndDate: endDate,
+        destinations: _destinations,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,17 +201,17 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                 children: [
                   // Trip Title and Status Row
                   Container(
-                    color: const Color.fromARGB(255, 112, 108, 108),
+                    color: const Color.fromARGB(255, 219, 218, 218),
                     padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
                         Expanded(
                           child: Text(
-                            widget.tripName,
+                            _currentTripName,
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Colors.black,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -131,13 +239,9 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.white),
+                          icon: const Icon(Icons.edit, color: Colors.black),
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'Edit trip functionality coming soon')),
-                            );
+                            _navigateToEditScreen();
                           },
                         ),
                       ],
@@ -146,6 +250,9 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
 
                   // Trip Overview Section
                   _buildTripOverview(),
+
+                  // Trip Timeline Section - Added here
+                  _buildTripTimeline(),
 
                   const Divider(height: 32, thickness: 1),
 
@@ -511,11 +618,7 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                   icon: const Icon(Icons.edit, size: 18),
                   label: const Text('Edit'),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              'Edit destination functionality coming soon')),
-                    );
+                    _navigateToEditDestinationScreen(destination);
                   },
                 ),
                 const SizedBox(width: 8),
@@ -661,6 +764,36 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
       setState(() {
         _destinations.removeWhere((dest) => dest['id'] == destinationId);
       });
+
+      // Update trip dates if there are still destinations
+      if (_destinations.isNotEmpty) {
+        // Get the earliest start date and latest end date
+        final earliestStartDate =
+            (_destinations.first['startDate'] as Timestamp).toDate();
+        final latestEndDate =
+            (_destinations.last['endDate'] as Timestamp).toDate();
+
+        // Calculate total days
+        final difference =
+            latestEndDate.difference(earliestStartDate).inDays + 1;
+
+        // Update the trip dates in Firestore
+        await FirebaseFirestore.instance
+            .collection('tripPlans')
+            .doc(widget.tripPlanId)
+            .update({
+          'startDate': Timestamp.fromDate(earliestStartDate),
+          'endDate': Timestamp.fromDate(latestEndDate),
+          'totalDays': difference,
+        });
+
+        // Update local state
+        setState(() {
+          _tripData!['startDate'] = Timestamp.fromDate(earliestStartDate);
+          _tripData!['endDate'] = Timestamp.fromDate(latestEndDate);
+          _tripData!['totalDays'] = difference;
+        });
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Destination removed successfully')),
