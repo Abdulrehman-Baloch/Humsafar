@@ -423,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     MaterialPageRoute(
                       builder: (context) => ViewDestinationScreen(
                         destinationID: destinationID,
-                        imageUrl: imageUrl,
+                        imageUrls: imageUrl,
                         name: name,
                         rating: rating,
                       ),

@@ -3,17 +3,20 @@ import 'package:flutter/material.dart';
 import 'custom_navbar.dart' as custom;
 import 'add_to_existing_plan.dart';
 import 'create_trip_plan.dart';
+import 'submit_review.dart';
+import 'display_reviews.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ViewDestinationScreen extends StatelessWidget {
   final String destinationID;
-  final String imageUrl;
+  final String imageUrls;
   final String name;
   final double rating;
 
   const ViewDestinationScreen({
     super.key,
     required this.destinationID,
-    required this.imageUrl,
+    required this.imageUrls,
     required this.name,
     required this.rating,
   });
@@ -66,7 +69,7 @@ class ViewDestinationScreen extends StatelessWidget {
                         _buildDescriptionSection(description, ttv, weather),
 
                         // Reviews section
-                        _buildReviewsSection(),
+                        _buildReviewsSection(context),
 
                         // Action buttons at the bottom
                         _buildActionButtons(context),
@@ -89,9 +92,9 @@ class ViewDestinationScreen extends StatelessWidget {
     return SizedBox(
       height: 250,
       width: double.infinity,
-      child: imageUrl.startsWith('http')
+      child: imageUrls.startsWith('http')
           ? Image.network(
-              imageUrl,
+              imageUrls,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -101,7 +104,7 @@ class ViewDestinationScreen extends StatelessWidget {
               },
             )
           : Image.asset(
-              imageUrl,
+              imageUrls,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -234,7 +237,7 @@ class ViewDestinationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReviewsSection() {
+  Widget _buildReviewsSection(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -253,6 +256,14 @@ class ViewDestinationScreen extends StatelessWidget {
               ElevatedButton(
                 onPressed: () {
                   // Add review functionality
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SubmitReviewPage(
+                        destinationID: destinationID,
+                      ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -311,6 +322,9 @@ class ViewDestinationScreen extends StatelessWidget {
                   DateTime reviewTimestamp = reviewData['timestamp'] != null
                       ? (reviewData['timestamp'] as Timestamp).toDate()
                       : DateTime.now();
+                  List<String>? imageUrls = reviewData['imageUrls'] != null
+                      ? List<String>.from(reviewData['imageUrls'])
+                      : null;
 
                   return Column(
                     children: [
@@ -319,6 +333,8 @@ class ViewDestinationScreen extends StatelessWidget {
                         reviewRating,
                         reviewText,
                         reviewTimestamp,
+                        imageUrls,
+                        context,
                       ),
                       Divider(),
                     ],
@@ -332,8 +348,8 @@ class ViewDestinationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildReviewItem(
-      String userEmail, double rating, String comment, DateTime timestamp) {
+  Widget _buildReviewItem(String userEmail, double rating, String comment,
+      DateTime timestamp, List<String>? imageUrls, BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12),
       child: Column(
@@ -380,6 +396,56 @@ class ViewDestinationScreen extends StatelessWidget {
               color: Colors.grey[600],
               fontSize: 12,
             ),
+          ),
+          SizedBox(height: 8),
+          // Display images if available
+          if (imageUrls != null && imageUrls.isNotEmpty)
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: imageUrls.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrls[index],
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
+                    ),
+                  );
+                },
+              ),
+            ),
+          SizedBox(height: 8),
+          // Add a "View" button
+          ElevatedButton(
+            onPressed: () {
+              // Navigate to DisplayReviewsPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DisplayReviewsPage(
+                    destinationID: destinationID,
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text('View'),
           ),
         ],
       ),

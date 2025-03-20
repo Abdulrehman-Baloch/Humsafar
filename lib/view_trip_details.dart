@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'trip_timeline.dart';
 import 'edit_trip_plan.dart';
 import 'edit_trip_destination.dart';
+import 'display_accommodation.dart';
 
 class TripPlanDetailsScreen extends StatefulWidget {
   final String tripPlanId;
@@ -65,7 +66,14 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
               .doc(destinationId)
               .collection('transportation')
               .get();
-
+          // Fetch accommodations for this destination
+          final accommodationsSnapshot = await FirebaseFirestore.instance
+              .collection('tripPlans')
+              .doc(widget.tripPlanId)
+              .collection('tripDestinations')
+              .doc(destinationId)
+              .collection('tripAccommodations')
+              .get();
           // Store transport bookings in a list
           final transportBookings = transportSnapshot.docs
               .map((doc) => {
@@ -73,12 +81,19 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                     'id': doc.id, // Include transport document ID
                   })
               .toList();
-
+          // Store accommodations in a list
+          final accommodations = accommodationsSnapshot.docs
+              .map((doc) => {
+                    ...doc.data(),
+                    'id': doc.id, // Include accommodation document ID
+                  })
+              .toList();
           // Add transport bookings to the destination
           destinations.add({
             ...destinationData,
             'id': destinationId,
             'transportBookings': transportBookings,
+            'accommodations': accommodations,
           });
         }
 
@@ -430,6 +445,66 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
     );
   }
 
+  Widget _buildAccommodationCard(Map<String, dynamic> accommodation) {
+    return Card(
+      margin: const EdgeInsets.only(top: 10),
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  accommodation['name'] ?? 'Unknown Accommodation',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${accommodation['price'] ?? 'N/A'} PKR',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.hotel, size: 16, color: Colors.orange),
+                const SizedBox(width: 4),
+                Text(
+                  accommodation['description'],
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 16, color: Colors.blue),
+                const SizedBox(width: 4),
+                Text(
+                  'Booked on: ${_formatDate(accommodation['bookedAt'])}',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTripOverview() {
     if (_tripData == null) return const SizedBox.shrink();
 
@@ -613,6 +688,15 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                   ],
                 ),
                 const SizedBox(height: 4),
+                destination['accommodations'] == null ||
+                        destination['accommodations'].isEmpty
+                    ? const SizedBox.shrink()
+                    : Column(
+                        children: destination['accommodations']
+                            .map<Widget>((accommodation) =>
+                                _buildAccommodationCard(accommodation))
+                            .toList(),
+                      ),
                 destination['transportBookings'] == null ||
                         destination['transportBookings'].isEmpty
                     ? const Center(
@@ -777,24 +861,29 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
               const SizedBox(height: 10),
 
               // Add Accommodation Button
-              // ElevatedButton.icon(
-              //   icon: const Icon(Icons.hotel),
-              //   label: const Text("Add Accommodation"),
-              //   style: ElevatedButton.styleFrom(
-              //     backgroundColor: Colors.green,
-              //     foregroundColor: Colors.white,
-              //     minimumSize: const Size(double.infinity, 40),
-              //   ),
-              //   onPressed: () {
-              //     Navigator.pop(context); // Close bottom sheet
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (context) => bookAccommodation(),
-              //       ),
-              //     );
-              //   },
-              // ),
+              // Add Accommodation Button
+              ElevatedButton.icon(
+                icon: const Icon(Icons.hotel),
+                label: const Text("Add Accommodation"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 40),
+                ),
+                onPressed: () {
+                  Navigator.pop(context); // Close bottom sheet
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DisplayAccommodationsScreen(
+                        destinationID: destination['id'],
+                        destinationName: destination['destinationName'],
+                        tripPlanId: widget.tripPlanId,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         );
