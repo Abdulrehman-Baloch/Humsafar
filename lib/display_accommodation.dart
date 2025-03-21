@@ -4,12 +4,14 @@ import 'book_accommodation.dart';
 
 class DisplayAccommodationsScreen extends StatefulWidget {
   final String destinationID;
+  final String city;
   final String destinationName;
   final String tripPlanId;
 
   const DisplayAccommodationsScreen({
     super.key,
     required this.destinationID,
+    required this.city,
     required this.destinationName,
     required this.tripPlanId,
   });
@@ -21,13 +23,12 @@ class DisplayAccommodationsScreen extends StatefulWidget {
 
 class _DisplayAccommodationsScreenState
     extends State<DisplayAccommodationsScreen> {
-  // Fetch accommodations based on destinationName
+  // Fetch accommodations based on city
   Stream<QuerySnapshot> _fetchAccommodations() {
     return FirebaseFirestore.instance
         .collection(
             'accommodations') // Ensure this matches your Firestore collection name
-        .where('destination',
-            isEqualTo: widget.destinationName) // Match destination name
+        .where('destination', isEqualTo: widget.city) // Match city name
         .snapshots();
   }
 
@@ -35,7 +36,7 @@ class _DisplayAccommodationsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Accommodations in ${widget.destinationName}'),
+        title: Text('Accommodations in ${widget.city}'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),
@@ -44,6 +45,12 @@ class _DisplayAccommodationsScreenState
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -83,42 +90,7 @@ class _DisplayAccommodationsScreenState
           children: [
             // Small Image on the Left
             if (accommodation['imageurl'] != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  accommodation['imageurl'],
-                  width: 80, // Small width
-                  height: 100, // Small height
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 80,
-                      height: 80,
-                      color: Colors.grey[200],
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.image,
-                        color: Colors.grey,
-                        size: 30,
-                      ),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      width: 80,
-                      height: 80,
-                      alignment: Alignment.center,
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    );
-                  },
-                ),
-              ),
+              _buildAccommodationImage(accommodation['imageurl']),
             const SizedBox(width: 16), // Space between image and details
 
             // Accommodation Details
@@ -158,44 +130,88 @@ class _DisplayAccommodationsScreenState
                   const SizedBox(height: 16),
 
                   // Select Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Navigate to BookAccommodationScreen with the selected accommodation
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => book_accommodation(
-                              accommodation:
-                                  accommodation, // Pass the selected accommodation
-                              destinationID: widget.destinationID,
-                              destinationName: widget.destinationName,
-                              tripPlanId: widget.tripPlanId,
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'SELECT',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildSelectButton(accommodation),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Build the accommodation image widget
+  Widget _buildAccommodationImage(String imageUrl) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        imageUrl,
+        width: 80, // Small width
+        height: 100, // Small height
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 80,
+            height: 100,
+            color: Colors.grey[200],
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.image,
+              color: Colors.grey,
+              size: 30,
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 80,
+            height: 100,
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Build the "SELECT" button
+  Widget _buildSelectButton(Map<String, dynamic> accommodation) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () {
+          // Navigate to BookAccommodationScreen with the selected accommodation
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => book_accommodation(
+                accommodation: accommodation, // Pass the selected accommodation
+                destinationID: widget.destinationID,
+                destinationName: widget.destinationName,
+                tripPlanId: widget.tripPlanId,
+              ),
+            ),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: const Text(
+          'SELECT',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );

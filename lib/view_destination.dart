@@ -322,9 +322,6 @@ class ViewDestinationScreen extends StatelessWidget {
                   DateTime reviewTimestamp = reviewData['timestamp'] != null
                       ? (reviewData['timestamp'] as Timestamp).toDate()
                       : DateTime.now();
-                  List<String>? imageUrls = reviewData['imageUrls'] != null
-                      ? List<String>.from(reviewData['imageUrls'])
-                      : null;
 
                   return Column(
                     children: [
@@ -333,7 +330,6 @@ class ViewDestinationScreen extends StatelessWidget {
                         reviewRating,
                         reviewText,
                         reviewTimestamp,
-                        imageUrls,
                         context,
                       ),
                       Divider(),
@@ -349,7 +345,7 @@ class ViewDestinationScreen extends StatelessWidget {
   }
 
   Widget _buildReviewItem(String userEmail, double rating, String comment,
-      DateTime timestamp, List<String>? imageUrls, BuildContext context) {
+      DateTime timestamp, BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12),
       child: Column(
@@ -396,56 +392,6 @@ class ViewDestinationScreen extends StatelessWidget {
               color: Colors.grey[600],
               fontSize: 12,
             ),
-          ),
-          SizedBox(height: 8),
-          // Display images if available
-          if (imageUrls != null && imageUrls.isNotEmpty)
-            SizedBox(
-              height: 100,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: imageUrls.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.all(4.0),
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrls[index],
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error),
-                    ),
-                  );
-                },
-              ),
-            ),
-          SizedBox(height: 8),
-          // Add a "View" button
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to DisplayReviewsPage
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DisplayReviewsPage(
-                    destinationID: destinationID,
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: Text('View'),
           ),
         ],
       ),

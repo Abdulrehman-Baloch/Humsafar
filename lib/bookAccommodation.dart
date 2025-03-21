@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'navigation_provider.dart';
 import 'find_accommodation.dart';
+import 'custom_navbar.dart' as custom;
 
 class bookAccommodation extends StatelessWidget {
   final Map<String, dynamic> accommodation;
@@ -46,7 +47,7 @@ class bookAccommodation extends StatelessWidget {
       body: Row(
         children: [
           // Add the sidebar navigation
-          NavigationBar(),
+          custom.NavigationBar(),
 
           // Main content
           Expanded(
@@ -239,17 +240,12 @@ class bookAccommodation extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: 30),
-                        // Book Hotel Button
+                        // Go Back Button
                         Center(
                           child: ElevatedButton(
                             onPressed: () {
-                              // Add booking logic here
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      "Booking ${accommodation['name']}..."),
-                                ),
-                              );
+                              // Navigate back to the previous screen (FindAccommodationScreen)
+                              Navigator.pop(context);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
@@ -261,7 +257,7 @@ class bookAccommodation extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              "Book Now",
+                              "Go Back",
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.white,
@@ -303,98 +299,6 @@ class bookAccommodation extends StatelessWidget {
       label: Text(label),
       backgroundColor: Colors.blueGrey.shade50,
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-    );
-  }
-}
-
-// Navigation Bar Widget
-class NavigationBar extends StatelessWidget {
-  const NavigationBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final navigationProvider = Provider.of<NavigationProvider>(context);
-
-    return Container(
-      width: 100,
-      color: const Color.fromARGB(255, 92, 91, 91),
-      child: Column(
-        children: [
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildNavItem(
-                    context, Icons.map, 'Your Trips', 0, navigationProvider),
-                _buildNavItem(
-                    context, Icons.list, 'Your Lists', 1, navigationProvider),
-                _buildNavItem(context, Icons.hotel, 'Find \nAccommodation', 2,
-                    navigationProvider),
-                _buildNavItem(context, Icons.directions_car,
-                    'Find \nTransportation', 3, navigationProvider),
-              ],
-            ),
-          ),
-          // Logout button at bottom with padding
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20.0),
-            child: _buildNavItem(
-                context, Icons.logout, 'Logout', 4, navigationProvider),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(BuildContext context, IconData icon, String label,
-      int index, NavigationProvider provider) {
-    final isSelected = provider.selectedIndex == index;
-
-    return GestureDetector(
-      onTap: () {
-        provider.updateSelectedIndex(index);
-        // Add navigation logic here if needed
-        if (index == 0) {
-          // Navigate to Trips screen
-        } else if (index == 1) {
-          // Navigate to Lists screen
-        } else if (index == 2) {
-          // Navigate to Accommodation search
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => FindAccommodationScreen()),
-          );
-        } else if (index == 3) {
-          // Navigate to Transportation search
-        } else if (index == 4) {
-          // Handle logout
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon,
-                size: 24, color: isSelected ? Colors.black : Colors.white),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: 100,
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.black : Colors.white,
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 2,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

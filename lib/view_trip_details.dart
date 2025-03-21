@@ -92,6 +92,8 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
           destinations.add({
             ...destinationData,
             'id': destinationId,
+            'destinationName': destinationData['destinationName'],
+            'city': destinationData['city'],
             'transportBookings': transportBookings,
             'accommodations': accommodations,
           });
@@ -872,12 +874,15 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                 ),
                 onPressed: () {
                   Navigator.pop(context); // Close bottom sheet
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => DisplayAccommodationsScreen(
                         destinationID: destination['id'],
-                        destinationName: destination['destinationName'],
+                        city: destination['city'] ?? 'Unknown city',
+                        destinationName: destination['destinationName'] ??
+                            'unknown destination',
                         tripPlanId: widget.tripPlanId,
                       ),
                     ),
