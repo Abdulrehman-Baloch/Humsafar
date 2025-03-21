@@ -4,14 +4,12 @@ import 'book_accommodation.dart';
 
 class DisplayAccommodationsScreen extends StatefulWidget {
   final String destinationID;
-  final String city;
   final String destinationName;
   final String tripPlanId;
 
   const DisplayAccommodationsScreen({
     super.key,
     required this.destinationID,
-    required this.city,
     required this.destinationName,
     required this.tripPlanId,
   });
@@ -28,7 +26,8 @@ class _DisplayAccommodationsScreenState
     return FirebaseFirestore.instance
         .collection(
             'accommodations') // Ensure this matches your Firestore collection name
-        .where('destination', isEqualTo: widget.city) // Match city name
+        .where('destination',
+            isEqualTo: widget.destinationName) // Match city name
         .snapshots();
   }
 
@@ -36,7 +35,7 @@ class _DisplayAccommodationsScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Accommodations in ${widget.city}'),
+        title: Text('Accommodations in ${widget.destinationName}'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),

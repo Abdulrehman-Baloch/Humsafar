@@ -93,7 +93,6 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
             ...destinationData,
             'id': destinationId,
             'destinationName': destinationData['destinationName'],
-            'city': destinationData['city'],
             'transportBookings': transportBookings,
             'accommodations': accommodations,
           });
@@ -880,7 +879,6 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                     MaterialPageRoute(
                       builder: (context) => DisplayAccommodationsScreen(
                         destinationID: destination['id'],
-                        city: destination['city'] ?? 'Unknown city',
                         destinationName: destination['destinationName'] ??
                             'unknown destination',
                         tripPlanId: widget.tripPlanId,
