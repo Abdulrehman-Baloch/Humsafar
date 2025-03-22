@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'book_accommodation.dart';
+import 'view_accommodation.dart';
 import 'custom_navbar.dart' as cn; // Import your custom NavigationBar
 
 class FindAccommodationScreen extends StatefulWidget {
@@ -14,17 +14,47 @@ class FindAccommodationScreen extends StatefulWidget {
 class _FindAccommodationScreenState extends State<FindAccommodationScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<QueryDocumentSnapshot> _accommodations = [];
+  List<QueryDocumentSnapshot> _allAccommodations = [];
 
-  void _searchAccommodation() async {
-    String searchQuery = _searchController.text.trim().toLowerCase();
-    if (searchQuery.isEmpty) return;
+  // Price range filter
+  int? _minPrice;
+  int? _maxPrice;
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllAccommodations(); // Fetch all accommodations initially
+  }
+
+  void _fetchAllAccommodations() async {
     try {
       QuerySnapshot querySnapshot =
           await FirebaseFirestore.instance.collection('accommodations').get();
 
+      setState(() {
+        _allAccommodations = querySnapshot.docs;
+        _accommodations =
+            _allAccommodations; // Display all accommodations initially
+      });
+    } catch (e) {
+      print("Error fetching all accommodations: $e");
+    }
+  }
+
+  void _searchAccommodation() async {
+    String searchQuery = _searchController.text.trim().toLowerCase();
+    if (searchQuery.isEmpty) {
+      // If search bar is empty, show all accommodations
+      setState(() {
+        _accommodations = _allAccommodations;
+      });
+      return;
+    }
+
+    try {
+      // Filter accommodations based on the search query
       List<QueryDocumentSnapshot> filteredAccommodations =
-          querySnapshot.docs.where((doc) {
+          _allAccommodations.where((doc) {
         var accommodation = doc.data() as Map<String, dynamic>;
         String destination =
             accommodation['destination']?.toString().toLowerCase() ?? '';
@@ -35,7 +65,91 @@ class _FindAccommodationScreenState extends State<FindAccommodationScreen> {
         _accommodations = filteredAccommodations;
       });
     } catch (e) {
-      print("Error fetching data: $e");
+      print("Error filtering accommodations: $e");
+    }
+  }
+
+  void _applyPriceFilter() async {
+    // Show a dialog to get min and max price
+    final priceRange = await showDialog<Map<String, int>>(
+      context: context,
+      builder: (context) {
+        final TextEditingController minPriceController =
+            TextEditingController();
+        final TextEditingController maxPriceController =
+            TextEditingController();
+
+        return AlertDialog(
+          title: Text("Enter Price Range"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: minPriceController,
+                decoration: InputDecoration(
+                  labelText: "Minimum Price (PKR)",
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              SizedBox(height: 10),
+              TextField(
+                controller: maxPriceController,
+                decoration: InputDecoration(
+                  labelText: "Maximum Price (PKR)",
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+              child: Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                int minPrice = int.tryParse(minPriceController.text) ?? 0;
+                int maxPrice = int.tryParse(maxPriceController.text) ?? 0;
+
+                if (minPrice > 0 && maxPrice > 0 && maxPrice >= minPrice) {
+                  Navigator.pop(context, {
+                    'minPrice': minPrice,
+                    'maxPrice': maxPrice,
+                  });
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Invalid price range. Please try again."),
+                    ),
+                  );
+                }
+              },
+              child: Text("Apply"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (priceRange != null) {
+      setState(() {
+        _minPrice = priceRange['minPrice'];
+        _maxPrice = priceRange['maxPrice'];
+      });
+
+      // Apply price filter
+      List<QueryDocumentSnapshot> filteredAccommodations =
+          _allAccommodations.where((doc) {
+        var accommodation = doc.data() as Map<String, dynamic>;
+        int price = accommodation['price'] ?? 0;
+        return price >= _minPrice! && price <= _maxPrice!;
+      }).toList();
+
+      setState(() {
+        _accommodations = filteredAccommodations;
+      });
     }
   }
 
@@ -144,23 +258,13 @@ class _FindAccommodationScreenState extends State<FindAccommodationScreen> {
                               SizedBox(width: 10),
                               FilterChip(
                                 label: Text("Price"),
-                                onSelected: (selected) {},
+                                selected:
+                                    _minPrice != null && _maxPrice != null,
+                                onSelected: (selected) {
+                                  _applyPriceFilter();
+                                },
                                 backgroundColor: Colors.grey[200],
                                 avatar: Icon(Icons.attach_money, size: 18),
-                              ),
-                              SizedBox(width: 8),
-                              FilterChip(
-                                label: Text("Rating"),
-                                onSelected: (selected) {},
-                                backgroundColor: Colors.grey[200],
-                                avatar: Icon(Icons.star, size: 18),
-                              ),
-                              SizedBox(width: 8),
-                              FilterChip(
-                                label: Text("Amenities"),
-                                onSelected: (selected) {},
-                                backgroundColor: Colors.grey[200],
-                                avatar: Icon(Icons.hotel, size: 18),
                               ),
                             ],
                           ),
@@ -176,144 +280,25 @@ class _FindAccommodationScreenState extends State<FindAccommodationScreen> {
                                     String imageUrl =
                                         accommodation['imageurl'] ?? '';
 
-                                    return Card(
-                                      margin: EdgeInsets.symmetric(
-                                          vertical: 10, horizontal: 5),
-                                      elevation: 5,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(15),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10.0),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            // Hotel Image
-                                            imageUrl.isNotEmpty
-                                                ? ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10),
-                                                    child: Image.network(
-                                                      imageUrl,
-                                                      width: 120,
-                                                      height: 120,
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                  )
-                                                : Container(
-                                                    width: 120,
-                                                    height: 120,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.grey[300],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                    ),
-                                                    child: Icon(
-                                                      Icons.image_not_supported,
-                                                      color: Colors.grey[600],
-                                                    ),
-                                                  ),
-                                            SizedBox(width: 10),
-                                            // Hotel Details
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Expanded(
-                                                        child: Text(
-                                                          accommodation[
-                                                                  'name'] ??
-                                                              'No Name',
-                                                          style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 18,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      IconButton(
-                                                        icon: Icon(Icons
-                                                            .favorite_border),
-                                                        color: Colors.redAccent,
-                                                        onPressed: () {
-                                                          // Add to favorites functionality
-                                                        },
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 5),
-                                                  Text(
-                                                    "PKR ${accommodation['price']} per night",
-                                                    style: TextStyle(
-                                                      color: Colors.green,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 5),
-                                                  Text(
-                                                    accommodation[
-                                                            'description'] ??
-                                                        '',
-                                                    style: TextStyle(
-                                                        color:
-                                                            Colors.grey[700]),
-                                                    maxLines: 2,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  // View Button
-                                                  Align(
-                                                    alignment:
-                                                        Alignment.centerRight,
-                                                    child: ElevatedButton(
-                                                      onPressed: () {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                bookAccommodation(
-                                                              accommodation:
-                                                                  accommodation,
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                      style: ElevatedButton
-                                                          .styleFrom(
-                                                        backgroundColor:
-                                                            Colors.blueGrey,
-                                                        shape:
-                                                            RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(10),
-                                                        ),
-                                                      ),
-                                                      child: Text(
-                                                        "View",
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                    return AccommodationCard(
+                                      name: accommodation['name'] ?? 'No Name',
+                                      type: accommodation['type'] ?? 'No Type',
+                                      price:
+                                          "PKR ${accommodation['price']} per night",
+                                      description:
+                                          accommodation['description'] ?? '',
+                                      imageUrl: imageUrl,
+                                      onViewPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                bookAccommodation(
+                                              accommodation: accommodation,
                                             ),
-                                          ],
-                                        ),
-                                      ),
+                                          ),
+                                        );
+                                      },
                                     );
                                   },
                                 )
@@ -353,6 +338,138 @@ class _FindAccommodationScreenState extends State<FindAccommodationScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class AccommodationCard extends StatelessWidget {
+  final String name;
+  final String type;
+  final String price;
+  final String description;
+  final String imageUrl;
+  final VoidCallback onViewPressed;
+
+  const AccommodationCard({
+    super.key,
+    required this.name,
+    required this.type,
+    required this.price,
+    required this.description,
+    required this.imageUrl,
+    required this.onViewPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+      elevation: 5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Accommodation Image
+            imageUrl.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      imageUrl,
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+            SizedBox(width: 10),
+            // Accommodation Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.favorite_border),
+                        color: Colors.redAccent,
+                        onPressed: () {
+                          // Add to favorites functionality
+                        },
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    price,
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    type,
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    description,
+                    style: TextStyle(color: Colors.grey[700]),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 10),
+                  // View Button
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: onViewPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueGrey,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        "View",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
