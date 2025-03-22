@@ -128,7 +128,7 @@ class _ViewTripPlansScreenState extends State<ViewTripPlansScreen> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 16),
                       elevation: 2,
-                      color: const Color.fromARGB(255, 190, 185, 185),
+                      color: const Color.fromARGB(255, 212, 208, 208),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

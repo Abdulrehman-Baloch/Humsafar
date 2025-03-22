@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:humsafar_app/home.dart';
-import 'bookAccommodation.dart';
+//import 'book_accommodation.dart';
 import 'book_transportation.dart';
 import 'package:intl/intl.dart';
 import 'trip_timeline.dart';
@@ -488,7 +488,7 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
   }
 
   Widget _buildDestinationTile(Map<String, dynamic> destination) {
-    final destinationId = destination['id'] as String;
+    //final destinationId = destination['id'] as String;
     final destinationName = destination['destinationName'] as String;
     final startDate = destination['startDate'] as Timestamp;
     final endDate = destination['endDate'] as Timestamp;

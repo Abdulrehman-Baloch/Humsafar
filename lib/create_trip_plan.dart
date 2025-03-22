@@ -21,7 +21,7 @@ class _CreateTripPlanScreenState extends State<CreateTripPlanScreen> {
   // Form controllers
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
-  final _notesController = TextEditingController();
+  //final _notesController = TextEditingController();
   final _tripPlanNameController = TextEditingController();
 
   // Form values
@@ -41,7 +41,7 @@ class _CreateTripPlanScreenState extends State<CreateTripPlanScreen> {
   void dispose() {
     _startDateController.dispose();
     _endDateController.dispose();
-    _notesController.dispose();
+    //_notesController.dispose();
     _tripPlanNameController.dispose();
     super.dispose();
   }
@@ -146,7 +146,7 @@ class _CreateTripPlanScreenState extends State<CreateTripPlanScreen> {
       'startDate': Timestamp.fromDate(_startDate!),
       'endDate': Timestamp.fromDate(_endDate!),
       'daysOfStay': _daysOfStay,
-      'notes': _notesController.text,
+      //'notes': _notesController.text,
       'addedAt': FieldValue.serverTimestamp(),
     };
 
@@ -325,19 +325,6 @@ class _CreateTripPlanScreenState extends State<CreateTripPlanScreen> {
                 ),
                 const Divider(),
                 const SizedBox(height: 16),
-
-                // Notes
-                TextFormField(
-                  controller: _notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes about this destination',
-                    border: OutlineInputBorder(),
-                    hintText:
-                        'Key places to visit, activities, special requirements...',
-                  ),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 32),
 
                 // Create button
                 SizedBox(

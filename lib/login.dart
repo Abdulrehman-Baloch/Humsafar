@@ -66,104 +66,201 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color.fromARGB(255, 247, 229, 227),
-              Color.fromARGB(255, 109, 103, 104)
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+        height: screenHeight,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const AssetImage('images/bg3.jpg'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.3),
+              BlendMode.darken,
+            ),
           ),
         ),
-        child: Center(
+        child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.symmetric(horizontal: 25),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                const Text(
-                  "H U M S A F A R",
-                  style: TextStyle(
-                    fontSize: 52,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    helperText: "Please Enter Email",
-                    prefixIcon: const Icon(Icons.email, color: Colors.black),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                TextField(
-                  controller: passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    helperText: "Please Enter Password",
-                    prefixIcon: const Icon(Icons.lock, color: Colors.black),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: Colors.black,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 25),
+                // Logo section with fixed size
                 SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: loginUser,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 66, 63, 64),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                    ),
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
+                  width: 250,
+                  height: 250,
+                  child: Image.asset(
+                    'images/logo1.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 15),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SignupScreen()),
-                    );
-                  },
-                  child: const Text(
-                    "Don't have an account? Sign up",
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+
+                // Login form
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 15,
+                    vertical: 15,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Welcome Back",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: emailController,
+                        decoration: InputDecoration(
+                          labelText: "Email",
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          prefixIcon:
+                              const Icon(Icons.email, color: Colors.white70),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: Colors.white38),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: Colors.white),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: "Password",
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          prefixIcon:
+                              const Icon(Icons.lock, color: Colors.white70),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Colors.white70,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: Colors.white38),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: Colors.white),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 15),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 45,
+                        child: ElevatedButton(
+                          onPressed: loginUser,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color.fromARGB(255, 79, 108, 131),
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            elevation: 3,
+                          ),
+                          child: const Text(
+                            "LOGIN",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Sign up link with shadow
+                Container(
+                  width: 250,
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Don't have an account? ",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black,
+                              offset: Offset(1, 1),
+                              blurRadius: 3,
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SignupScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          "Sign Up",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                offset: Offset(1, 1),
+                                blurRadius: 3,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

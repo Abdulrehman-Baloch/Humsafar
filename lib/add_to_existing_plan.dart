@@ -24,7 +24,7 @@ class _AddDestinationToExistingTripScreenState
   // Form controllers
   final _startDateController = TextEditingController();
   final _endDateController = TextEditingController();
-  final _notesController = TextEditingController();
+  //final _notesController = TextEditingController();
 
   // Form values
   DateTime? _startDate;
@@ -53,7 +53,7 @@ class _AddDestinationToExistingTripScreenState
   void dispose() {
     _startDateController.dispose();
     _endDateController.dispose();
-    _notesController.dispose();
+    //_notesController.dispose();
     super.dispose();
   }
 
@@ -282,7 +282,7 @@ class _AddDestinationToExistingTripScreenState
         'startDate': Timestamp.fromDate(_startDate!),
         'endDate': Timestamp.fromDate(_endDate!),
         'daysOfStay': _daysOfStay,
-        'notes': _notesController.text,
+        //'notes': _notesController.text,
         'addedAt': FieldValue.serverTimestamp(),
       };
 
@@ -595,7 +595,7 @@ class _AddDestinationToExistingTripScreenState
                           );
                         },
                       ),
- 
+
                       const SizedBox(height: 24),
 
                       // Stay Details section
@@ -672,19 +672,6 @@ class _AddDestinationToExistingTripScreenState
                             )
                           : SizedBox.shrink(),
                       const SizedBox(height: 24),
-
-                      // Notes
-                      TextFormField(
-                        controller: _notesController,
-                        decoration: const InputDecoration(
-                          labelText: 'Notes about this destination',
-                          border: OutlineInputBorder(),
-                          hintText:
-                              'Key places to visit, activities, special requirements...',
-                        ),
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 32),
 
                       // Add destination button
                       SizedBox(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'bookAccommodation.dart';
+import 'book_accommodation.dart';
 import 'custom_navbar.dart' as cn; // Import your custom NavigationBar
 
 class FindAccommodationScreen extends StatefulWidget {

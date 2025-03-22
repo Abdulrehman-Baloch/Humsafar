@@ -37,10 +37,6 @@ class _EditDestinationScreenState extends State<EditDestinationScreen> {
       text: widget.destinationData['destinationName'],
     );
 
-    _notesController = TextEditingController(
-      text: widget.destinationData['notes'] ?? '',
-    );
-
     _startDate = (widget.destinationData['startDate'] as Timestamp).toDate();
     _endDate = (widget.destinationData['endDate'] as Timestamp).toDate();
     _daysOfStay = widget.destinationData['daysOfStay'];
@@ -49,7 +45,7 @@ class _EditDestinationScreenState extends State<EditDestinationScreen> {
   @override
   void dispose() {
     _destinationNameController.dispose();
-    _notesController.dispose();
+    //_notesController.dispose();
     super.dispose();
   }
 
@@ -106,7 +102,7 @@ class _EditDestinationScreenState extends State<EditDestinationScreen> {
         'startDate': Timestamp.fromDate(_startDate),
         'endDate': Timestamp.fromDate(_endDate),
         'daysOfStay': _daysOfStay,
-        'notes': _notesController.text.trim(),
+        //'notes': _notesController.text.trim(),
         'updatedAt': Timestamp.now(),
       });
 
@@ -121,7 +117,7 @@ class _EditDestinationScreenState extends State<EditDestinationScreen> {
           'startDate': Timestamp.fromDate(_startDate),
           'endDate': Timestamp.fromDate(_endDate),
           'daysOfStay': _daysOfStay,
-          'notes': _notesController.text.trim(),
+          //'notes': _notesController.text.trim(),
         }
       });
     } catch (e) {
@@ -317,17 +313,6 @@ class _EditDestinationScreenState extends State<EditDestinationScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Notes Field
-                    TextFormField(
-                      controller: _notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Notes (Optional)',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 30),
 
                     // Update Button
                     ElevatedButton(

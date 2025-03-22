@@ -41,43 +41,6 @@ class _EditTripPlanScreenState extends State<EditTripPlanScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
-    final initialDate = isStartDate ? _startDate : _endDate;
-    final selectedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: isStartDate ? DateTime.now() : _startDate,
-      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.black,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (selectedDate != null) {
-      setState(() {
-        if (isStartDate) {
-          _startDate = selectedDate;
-          // If end date is before new start date, update end date
-          if (_endDate.isBefore(_startDate)) {
-            _endDate = _startDate.add(const Duration(days: 1));
-          }
-        } else {
-          _endDate = selectedDate;
-        }
-      });
-    }
-  }
-
   int _calculateTotalDays() {
     return _endDate.difference(_startDate).inDays + 1;
   }
@@ -90,17 +53,15 @@ class _EditTripPlanScreenState extends State<EditTripPlanScreen> {
     });
 
     try {
-      // Update the trip data in Firestore
+      // Update the trip data in Firestore, but don't change dates
       await FirebaseFirestore.instance
           .collection('tripPlans')
           .doc(widget.tripPlanId)
           .update({
         'name': _tripNameController.text.trim(),
-        'startDate': Timestamp.fromDate(_startDate),
-        'endDate': Timestamp.fromDate(_endDate),
-        'totalDays': _calculateTotalDays(),
         'numberOfTravelers': _numberOfTravelers,
         'updatedAt': Timestamp.now(),
+        // We're no longer updating startDate, endDate, or totalDays here
       });
 
       if (mounted) {
@@ -137,7 +98,7 @@ class _EditTripPlanScreenState extends State<EditTripPlanScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Trip Name
-                    SizedBox(width: 20),
+                    const SizedBox(height: 20),
                     TextFormField(
                       controller: _tripNameController,
                       decoration: const InputDecoration(
@@ -154,7 +115,7 @@ class _EditTripPlanScreenState extends State<EditTripPlanScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Date Selection
+                    // Date Display (Read-only)
                     const Text(
                       'Trip Dates',
                       style: TextStyle(
@@ -162,81 +123,86 @@ class _EditTripPlanScreenState extends State<EditTripPlanScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Trip dates are automatically set based on your destinations',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
-                          child: InkWell(
-                            onTap: () => _selectDate(context, true),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Start Date',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(4),
+                              color: Colors.grey.shade100,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Start Date',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today,
+                                        size: 16, color: Colors.grey),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      DateFormat('MMM dd, yyyy')
+                                          .format(_startDate),
+                                      style: const TextStyle(fontSize: 16),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.calendar_today,
-                                          size: 16),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        DateFormat('MMM dd, yyyy')
-                                            .format(_startDate),
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: InkWell(
-                            onTap: () => _selectDate(context, false),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'End Date',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12,
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(4),
+                              color: Colors.grey.shade100,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'End Date',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today,
+                                        size: 16, color: Colors.grey),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      DateFormat('MMM dd, yyyy')
+                                          .format(_endDate),
+                                      style: const TextStyle(fontSize: 16),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.calendar_today,
-                                          size: 16),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        DateFormat('MMM dd, yyyy')
-                                            .format(_endDate),
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ),
