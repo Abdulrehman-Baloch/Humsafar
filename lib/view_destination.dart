@@ -68,6 +68,9 @@ class ViewDestinationScreen extends StatelessWidget {
                         // Description and details
                         _buildDescriptionSection(description, ttv, weather),
 
+                        // Local Attractions section
+                        _buildLocalAttractionsSection(),
+
                         // Reviews section
                         _buildReviewsSection(context),
 
@@ -199,6 +202,188 @@ class ViewDestinationScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildLocalAttractionsSection() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Local Attractions and Activities',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 16),
+
+          // Fetch local attractions from Firestore
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection(
+                    'destinations') // Access the destinations collection
+                .doc(destinationID) // Select the specific destination document
+                .collection(
+                    'localAttractions') // Fetch the localAttractions subcollection
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return Container(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    'No local attractions found for this destination.',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 16,
+                    ),
+                  ),
+                );
+              }
+
+              // Display attractions in a vertical list with horizontal cards
+              return ListView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: snapshot.data!.docs.length,
+                itemBuilder: (context, i) {
+                  var attractionData =
+                      snapshot.data!.docs[i].data() as Map<String, dynamic>;
+
+                  String attractionName =
+                      attractionData['name'] ?? 'Unnamed Attraction';
+                  String attractionImageUrl = attractionData['imageUrl'] ?? '';
+                  String attractionDescription =
+                      attractionData['description'] ??
+                          'No description available';
+
+                  return _buildAttractionCardHorizontal(
+                    context,
+                    attractionName,
+                    attractionImageUrl,
+                    attractionDescription,
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttractionCardHorizontal(
+    BuildContext context,
+    String name,
+    String imageUrl,
+    String description,
+  ) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Attraction image - left side
+          ClipRRect(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10),
+              bottomLeft: Radius.circular(10),
+            ),
+            child: Container(
+              height: 120,
+              width: 120,
+              child: imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: Icon(Icons.image,
+                              size: 40, color: Colors.grey[600]),
+                        );
+                      },
+                    )
+                  : Container(
+                      color: Colors.grey[200],
+                      child:
+                          Icon(Icons.place, size: 40, color: Colors.grey[600]),
+                    ),
+            ),
+          ),
+
+          // Attraction information - right side
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Attraction name
+                  Text(
+                    name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  // Optional: You could add a category or tag here with a colored label
+                  Container(
+                    margin: EdgeInsets.only(top: 6, bottom: 8),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.green[100],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'Popular Attraction',
+                      style: TextStyle(
+                        color: Colors.green[800],
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+
+                  // Description - limited to 2 lines with ellipsis
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[700],
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+// Update the attraction section to use the horizontal card
 
   Widget _infoCard(String title, String value, IconData icon) {
     return Container(

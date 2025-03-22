@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:humsafar_app/home.dart';
@@ -27,6 +28,7 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _tripData;
   List<Map<String, dynamic>> _destinations = [];
+  List<Map<String, dynamic>> selectedActivities = [];
   late String _currentTripName;
 
   @override
@@ -565,6 +567,7 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
 
   Widget _buildDestinationTile(Map<String, dynamic> destination) {
     final destinationId = destination['id'] as String;
+    print(destinationId);
     final destinationName = destination['destinationName'] as String;
     final startDate = destination['startDate'] as Timestamp;
     final endDate = destination['endDate'] as Timestamp;
@@ -627,11 +630,7 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                         minimumSize: const Size(0, 32),
                       ),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  'Add activity for $destinationName coming soon')),
-                        );
+                        //_showAttractionsDialog(context, destination);
                       },
                     ),
                   ],
