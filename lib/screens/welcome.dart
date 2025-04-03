@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:humsafar_app/login.dart';
-import 'package:humsafar_app/signup.dart';
+import 'package:humsafar_app/screens/auth/login.dart';
+import 'package:humsafar_app/screens/auth/signup.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});

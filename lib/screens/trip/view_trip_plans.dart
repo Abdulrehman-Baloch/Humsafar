@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'view_trip_details.dart';
-import 'home.dart';
+import '../home.dart';
 
 class ViewTripPlansScreen extends StatefulWidget {
   const ViewTripPlansScreen({super.key});

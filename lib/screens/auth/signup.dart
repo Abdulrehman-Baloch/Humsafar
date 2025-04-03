@@ -1,33 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:humsafar_app/home.dart';
-import 'signup.dart';
+import 'package:humsafar_app/screens/auth/login.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _SignupScreenState createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  Future<void> loginUser() async {
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+  Future<void> registerUser() async {
+    if (nameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
+        const SnackBar(content: Text('Please enter name, email and password')),
       );
       return;
     }
 
     try {
-      // Sign in user with Firebase Authentication
+      // Create user with Firebase Authentication
       UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
@@ -35,28 +37,18 @@ class _LoginScreenState extends State<LoginScreen> {
       // Get the user ID
       String userId = userCredential.user!.uid;
 
-      // Check if user exists in Firestore, create if not
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .get();
-
-      if (!userDoc.exists) {
-        // If user doesn't exist in Firestore (might happen if signing in first time after database change)
-        await FirebaseFirestore.instance.collection('users').doc(userId).set({
-          'email': emailController.text.trim(),
-          'name': userCredential.user?.displayName ?? 'User', // Fallback name
-          'createdAt': Timestamp.now(),
-        });
-      }
+      // Store additional user info in Firestore
+      await FirebaseFirestore.instance.collection('users').doc(userId).set({
+        'name': nameController.text.trim(),
+        'email': emailController.text.trim(),
+        'createdAt': Timestamp.now(),
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login Successful!')),
+        const SnackBar(content: Text('Signup Successful!')),
       );
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
+      // Navigate back to login screen
+      Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
@@ -97,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // Login form
+                // Signup form
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 15,
@@ -118,12 +110,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "Welcome Back",
+                        "Create Account",
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(
+                          labelText: "Full Name",
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          prefixIcon:
+                              const Icon(Icons.person, color: Colors.white70),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: Colors.white38),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: Colors.white),
+                          ),
+                        ),
+                        style: const TextStyle(color: Colors.white),
                       ),
                       const SizedBox(height: 10),
                       TextField(
@@ -182,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         height: 45,
                         child: ElevatedButton(
-                          onPressed: loginUser,
+                          onPressed: registerUser,
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 const Color.fromARGB(255, 79, 108, 131),
@@ -193,7 +204,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             elevation: 3,
                           ),
                           child: const Text(
-                            "LOGIN",
+                            "SIGN UP",
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,
@@ -206,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // Sign up link with shadow
+                // Login link with shadow
                 Container(
                   width: 250,
                   decoration: BoxDecoration(
@@ -222,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text(
-                        "Don't have an account? ",
+                        "Already have an account? ",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -237,15 +248,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SignupScreen(),
+                              builder: (context) => const LoginScreen(),
                             ),
                           );
                         },
                         child: const Text(
-                          "Sign Up",
+                          "Login",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,

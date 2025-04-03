@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'navigation_provider.dart';
-import 'find_accommodation.dart';
-import 'view_trip_plans.dart';
-import 'search_transportation.dart';
-import 'welcome.dart';
+import '../../screens/bookings/accommodation/find_accommodation.dart';
+import '../../screens/trip/view_trip_plans.dart';
+import '../../screens/bookings/transportation/search_transportation.dart';
+import '../../screens/welcome.dart';
 
 class NavigationBar extends StatelessWidget {
   const NavigationBar({super.key});

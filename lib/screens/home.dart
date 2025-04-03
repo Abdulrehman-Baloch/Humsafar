@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'custom_navbar.dart' as custom;
-import 'view_destination.dart';
+import '../widgets/navigation/custom_navbar.dart' as custom;
+import 'trip/view_destination.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

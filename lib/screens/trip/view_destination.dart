@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'custom_navbar.dart' as custom;
+import '../../widgets/navigation/custom_navbar.dart' as custom;
 import 'add_to_existing_plan.dart';
 import 'create_trip_plan.dart';
-import 'submit_review.dart';
-import 'display_reviews.dart';
+import '../reviews/submit_review.dart';
+import '../../widgets/reviews/display_reviews.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class ViewDestinationScreen extends StatelessWidget {
@@ -304,7 +304,7 @@ class ViewDestinationScreen extends StatelessWidget {
               topLeft: Radius.circular(10),
               bottomLeft: Radius.circular(10),
             ),
-            child: Container(
+            child: SizedBox(
               height: 120,
               width: 120,
               child: imageUrl.isNotEmpty

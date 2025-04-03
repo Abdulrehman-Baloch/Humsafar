@@ -1,14 +1,13 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:humsafar_app/home.dart';
+import 'package:humsafar_app/screens/home.dart';
 //import 'book_accommodation.dart';
-import 'book_transportation.dart';
+import '../bookings/transportation/book_transportation.dart';
 import 'package:intl/intl.dart';
-import 'trip_timeline.dart';
+import '../../widgets/trip/trip_timeline.dart';
 import 'edit_trip_plan.dart';
 import 'edit_trip_destination.dart';
-import 'display_accommodation.dart';
+import '../bookings/accommodation/display_accommodation.dart';
 
 class TripPlanDetailsScreen extends StatefulWidget {
   final String tripPlanId;

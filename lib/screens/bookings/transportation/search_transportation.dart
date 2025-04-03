@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'custom_navbar.dart' as custom;
+import '../../../widgets/navigation/custom_navbar.dart' as custom;
 
 class SearchTransportationScreen extends StatefulWidget {
   const SearchTransportationScreen({super.key});

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'trip_timeline.dart';
+import '../../widgets/trip/trip_timeline.dart';
 
 class AddDestinationToExistingTripScreen extends StatefulWidget {
   final String destinationID;

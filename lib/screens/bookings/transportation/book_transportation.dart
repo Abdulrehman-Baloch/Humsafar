@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'custom_navbar.dart' as custom;
+import '../../../widgets/navigation/custom_navbar.dart' as custom;
 
 class BookTransportationScreen extends StatefulWidget {
   final String destinationCity;

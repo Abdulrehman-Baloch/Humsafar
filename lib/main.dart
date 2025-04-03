@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart';
-import 'welcome.dart';
-import 'home.dart';
-import 'navigation_provider.dart';
+import 'util/firebase_options.dart';
+import 'screens/welcome.dart';
+import 'screens/home.dart';
+import 'widgets/navigation/navigation_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

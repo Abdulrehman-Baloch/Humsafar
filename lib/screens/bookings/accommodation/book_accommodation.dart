@@ -1,19 +1,202 @@
 import 'package:flutter/material.dart';
-import 'custom_navbar.dart' as custom;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Added FirebaseAuth import
+import '../../../widgets/navigation/custom_navbar.dart' as custom;
 
-class bookAccommodation extends StatelessWidget {
+class book_accommodation extends StatefulWidget {
   final Map<String, dynamic> accommodation;
+  final String destinationID;
+  final String destinationName;
+  final String tripPlanId; // Added tripPlanId to use in Firestore
 
-  const bookAccommodation({super.key, required this.accommodation});
+  const book_accommodation({
+    super.key,
+    required this.accommodation,
+    required this.destinationID,
+    required this.destinationName,
+    required this.tripPlanId, // Added tripPlanId parameter
+  });
+
+  @override
+  _BookAccommodationState createState() => _BookAccommodationState();
+}
+
+class _BookAccommodationState extends State<book_accommodation> {
+  Future<void> _book_accommodation(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('You need to be logged in to book accommodations')),
+      );
+      return;
+    }
+
+    try {
+      // Save accommodation to tripAccommodations subcollection under tripDestinations
+      await FirebaseFirestore.instance
+          .collection('tripPlans')
+          .doc(widget.tripPlanId)
+          .collection('tripDestinations')
+          .doc(widget.destinationID) // Use destinationID as the document ID
+          .collection('tripAccommodations')
+          .add({
+        'accommodationName': widget.accommodation['name'],
+        'price': widget.accommodation['price'],
+        'description': widget.accommodation['description'],
+        'imageurl': widget.accommodation['imageUrl'],
+        'destinationID': widget.destinationID,
+        'destinationName': widget.destinationName,
+        'userID': user.uid, // Add the userID
+        'bookedAt': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Accommodation booked successfully!')),
+      );
+
+      Navigator.pop(context); // Return to the previous screen
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error booking accommodation: $e')),
+      );
+    }
+  }
+
+  void _showConfirmationDialog() {
+    final TextEditingController daysController = TextEditingController();
+    int selectedRooms = 1; // Default to 1 room
+    double updatedPrice = (widget.accommodation['price'] as num).toDouble();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            void calculatePrice() {
+              final int days = int.tryParse(daysController.text) ?? 1;
+
+              setState(() {
+                updatedPrice =
+                    (widget.accommodation['price'] as num).toDouble() *
+                        days *
+                        selectedRooms;
+              });
+            }
+
+            return AlertDialog(
+              title: const Text("Booking Details"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: daysController,
+                      decoration: const InputDecoration(
+                        labelText: 'Number of Days',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) => calculatePrice(),
+                    ),
+                    const SizedBox(height: 16),
+                    // Dropdown for Number of Rooms
+                    DropdownButtonFormField<int>(
+                      value: selectedRooms,
+                      decoration: const InputDecoration(
+                        labelText: 'Number of Rooms',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [1, 2].map((int value) {
+                        return DropdownMenuItem<int>(
+                          value: value,
+                          child: Text('$value Room${value > 1 ? 's' : ''}'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          selectedRooms = value!;
+                          calculatePrice();
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Total Price: ${updatedPrice.toStringAsFixed(2)} PKR',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final int days = int.tryParse(daysController.text) ?? 1;
+
+                    try {
+                      await FirebaseFirestore.instance
+                          .collection('tripPlans')
+                          .doc(widget.tripPlanId)
+                          .collection('tripDestinations')
+                          .doc(widget.destinationID)
+                          .collection('tripAccommodations')
+                          .add({
+                        ...widget.accommodation,
+                        'days': days,
+                        'rooms': selectedRooms,
+                        'totalPrice': updatedPrice,
+                        'bookedAt': Timestamp.now(), // Fixed typo here
+                      });
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Booking confirmed!')),
+                      );
+                      Navigator.pop(context); // Close dialog
+                      Navigator.pop(context, true); // Return to previous screen
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Booking failed: $e')),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Confirm Booking'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<String> images = List<String>.from(accommodation['images'] ?? []);
+    List<String> images =
+        List<String>.from(widget.accommodation['images'] ?? []);
+    print(widget.accommodation);
 
+    // Use null-aware operators to handle null values
+    String accommodationName = widget.accommodation['name'] ?? 'Unknown Name';
+    String accommodationDescription =
+        widget.accommodation['description'] ?? 'No description available';
+    String accommodationPrice =
+        widget.accommodation['price']?.toString() ?? 'Price not available';
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(accommodation['name'] ?? 'Hotel Details'),
+        title: Text(widget.accommodation['name'] ?? 'Hotel Details'),
         backgroundColor: Colors.blueGrey,
         foregroundColor: Colors.white,
         actions: [
@@ -70,7 +253,7 @@ class bookAccommodation extends StatelessWidget {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          "Book your stay at ${accommodation['name']} in ${accommodation['destination'] ?? 'Amazing Location'}",
+                          "Book your stay at ${widget.accommodation['name']} in ${widget.accommodation['destination'] ?? 'Amazing Location'}",
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,
@@ -82,13 +265,11 @@ class bookAccommodation extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildInfoItem(Icons.star,
-                                "${accommodation['rating'] ?? '4.5'} Rating"),
+                                "${widget.accommodation['rating'] ?? '4.5'} Rating"),
                             _buildInfoItem(Icons.king_bed,
-                                "${accommodation['rooms'] ?? '1'} Rooms"),
-                            _buildInfoItem(Icons.emoji_people,
-                                "${accommodation['guests'] ?? '2'} Guests"),
+                                "${widget.accommodation['rooms'] ?? '1'} Rooms"),
                             _buildInfoItem(Icons.price_change,
-                                "PKR ${accommodation['price']} /night"),
+                                "PKR ${widget.accommodation['price']} /night"),
                           ],
                         ),
                       ],
@@ -187,7 +368,7 @@ class bookAccommodation extends StatelessWidget {
                         SizedBox(height: 12),
                         // Hotel Name
                         Text(
-                          accommodation['name'] ?? 'No Name',
+                          widget.accommodation['name'] ?? 'No Name',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -196,7 +377,7 @@ class bookAccommodation extends StatelessWidget {
                         SizedBox(height: 10),
                         // Price
                         Text(
-                          "PKR ${accommodation['price']} per night",
+                          "PKR ${widget.accommodation['price']} per night",
                           style: TextStyle(
                             fontSize: 18,
                             color: Colors.green,
@@ -206,7 +387,7 @@ class bookAccommodation extends StatelessWidget {
                         SizedBox(height: 10),
                         // Description
                         Text(
-                          accommodation['description'] ?? '',
+                          widget.accommodation['description'] ?? '',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[700],
@@ -237,12 +418,12 @@ class bookAccommodation extends StatelessWidget {
                           ],
                         ),
                         SizedBox(height: 30),
-                        // Go Back Button
+                        // Book Hotel Button
                         Center(
                           child: ElevatedButton(
                             onPressed: () {
-                              // Navigate back to the previous screen (FindAccommodationScreen)
-                              Navigator.pop(context);
+                              // Call the booking function
+                              _showConfirmationDialog();
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
@@ -254,7 +435,7 @@ class bookAccommodation extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              "Go Back",
+                              "Book Now",
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.white,

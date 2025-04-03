@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'custom_navbar.dart' as custom;
+import '../../widgets/navigation/custom_navbar.dart' as custom;
 
 class SubmitReviewPage extends StatefulWidget {
   final String destinationID;
