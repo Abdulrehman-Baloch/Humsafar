@@ -5,6 +5,7 @@ import '../../screens/bookings/accommodation/find_accommodation.dart';
 import '../../screens/trip/view_trip_plans.dart';
 import '../../screens/bookings/transportation/search_transportation.dart';
 import '../../screens/welcome.dart';
+import '../../screens/lists/my_lists_screen.dart';
 
 class NavigationBar extends StatelessWidget {
   const NavigationBar({super.key});
@@ -61,6 +62,10 @@ class NavigationBar extends StatelessWidget {
           );
         } else if (index == 1) {
           // Navigate to Lists screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MyListsScreen()),
+          );
         } else if (index == 2) {
           // Navigate to Accommodation search
           Navigator.push(
