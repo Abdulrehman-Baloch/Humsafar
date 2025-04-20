@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../widgets/navigation/custom_navbar.dart' as custom;
 import 'trip/view_destination.dart';
+import 'package:humsafar_app/screens/trip/ai_trip_planner.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -77,7 +78,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 textStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
-              onPressed: () {},
+              onPressed: () {
+                // Navigate to AI Trip Planner screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AITripPlannerScreen(),
+                  ),
+                );
+              },
               child: Text('PLAN YOUR PERFECT TRIP WITH AI'),
             ),
           ),

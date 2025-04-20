@@ -23,7 +23,7 @@ class _EditDestinationScreenState extends State<EditDestinationScreen> {
   bool _isLoading = false;
 
   late TextEditingController _destinationNameController;
-  late TextEditingController _notesController;
+  //late TextEditingController _notesController;
   late DateTime _startDate;
   late DateTime _endDate;
   late int _daysOfStay;

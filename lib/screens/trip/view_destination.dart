@@ -4,8 +4,6 @@ import '../../widgets/navigation/custom_navbar.dart' as custom;
 import 'add_to_existing_plan.dart';
 import 'create_trip_plan.dart';
 import '../reviews/submit_review.dart';
-import '../../widgets/reviews/display_reviews.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class ViewDestinationScreen extends StatelessWidget {
   final String destinationID;

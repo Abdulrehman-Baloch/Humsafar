@@ -9,6 +9,9 @@ import '../../widgets/trip/trip_timeline.dart';
 import 'edit_trip_plan.dart';
 import 'edit_trip_destination.dart';
 import '../bookings/accommodation/display_accommodation.dart';
+import 'package:share_plus/share_plus.dart';
+import 'share_trip_plan.dart';
+import 'trip_attractions_display.dart';
 
 class TripPlanDetailsScreen extends StatefulWidget {
   final String tripPlanId;
@@ -31,6 +34,7 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
   List<Map<String, dynamic>> _destinations = [];
   List<Map<String, dynamic>> selectedActivities = [];
   late String _currentTripName;
+  final ShareTripPlan _tripShareService = ShareTripPlan();
   String tripId = ''; // Add this
 
   @override
@@ -393,11 +397,15 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                                      'Share trip functionality coming soon')),
-                            );
+                            if (_tripData != null) {
+                              _tripShareService.shareTrip(
+                                context,
+                                tripPlanId: widget.tripPlanId,
+                                tripName: _currentTripName,
+                                tripData: _tripData!,
+                                destinations: _destinations,
+                              );
+                            }
                           },
                         ),
                         const SizedBox(height: 12),
@@ -1004,54 +1012,18 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
         ),
         children: [
           // Activities Section for this destination
+          // Activities Section for this destination
           Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Activities',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Add'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        minimumSize: const Size(0, 32),
-                      ),
-                      onPressed: () {
-                        //_showAttractionsDialog(context, destination);
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12.0),
-                    child: Text(
-                      'No activities added for this destination yet',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            child: TripAttractionsDisplay(
+              tripPlanId: widget.tripPlanId,
+              destinationId: destination['id'],
+              destinationName: destination['destinationName'],
             ),
           ),
+
+          const Divider(thickness: 0.5),
 
           const Divider(thickness: 0.5),
 
@@ -1715,6 +1687,91 @@ class _TripPlanDetailsScreenState extends State<TripPlanDetailsScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error removing destination: $e')),
+      );
+    }
+  }
+
+  Future<void> _shareTrip() async {
+    if (_tripData == null) return;
+
+    try {
+      // Build a formatted trip summary
+      final StringBuffer tripSummary = StringBuffer();
+
+      // Trip title and basic info
+      tripSummary.writeln('🧳 ${_currentTripName.toUpperCase()} 🧳');
+      tripSummary.writeln('');
+
+      // Trip dates
+      final startDate = (_tripData!['startDate'] as Timestamp).toDate();
+      final endDate = (_tripData!['endDate'] as Timestamp).toDate();
+      tripSummary.writeln(
+          '📅 ${_formatDate(Timestamp.fromDate(startDate))} - ${_formatDate(Timestamp.fromDate(endDate))}');
+      tripSummary.writeln('⏱️ ${_tripData!['totalDays']} days');
+      tripSummary.writeln('👥 ${_tripData!['numberOfTravelers']} travelers');
+      tripSummary.writeln('');
+
+      // Destinations
+      tripSummary.writeln('📍 DESTINATIONS:');
+      for (int i = 0; i < _destinations.length; i++) {
+        final destination = _destinations[i];
+        final destStartDate = (destination['startDate'] as Timestamp).toDate();
+        final destEndDate = (destination['endDate'] as Timestamp).toDate();
+
+        tripSummary.writeln('${i + 1}. ${destination['destinationName']}');
+        tripSummary.writeln(
+            '   ${_formatDate(Timestamp.fromDate(destStartDate))} - ${_formatDate(Timestamp.fromDate(destEndDate))} (${destination['daysOfStay']} days)');
+
+        // Add attractions if any
+        final attractionsSnapshot = await FirebaseFirestore.instance
+            .collection('tripPlans')
+            .doc(widget.tripPlanId)
+            .collection('tripDestinations')
+            .doc(destination['id'])
+            .collection('localAttractions')
+            .get();
+
+        if (attractionsSnapshot.docs.isNotEmpty) {
+          tripSummary.writeln('   🎯 Activities:');
+          for (int j = 0; j < attractionsSnapshot.docs.length; j++) {
+            final attraction = attractionsSnapshot.docs[j].data();
+            tripSummary.writeln('   - ${attraction['name']}');
+          }
+        }
+
+        // Add accommodations if any
+        if (destination['accommodations'] != null &&
+            destination['accommodations'].isNotEmpty) {
+          tripSummary.writeln('   🏨 Accommodations:');
+          for (var accommodation in destination['accommodations']) {
+            tripSummary.writeln('   - ${accommodation['name']}');
+          }
+        }
+
+        // Add transport bookings if any
+        if (destination['transportBookings'] != null &&
+            destination['transportBookings'].isNotEmpty) {
+          tripSummary.writeln('   🚌 Transportation:');
+          for (var transport in destination['transportBookings']) {
+            tripSummary.writeln(
+                '   - ${transport['transportType']} from ${transport['departure']} to ${transport['destination']}');
+          }
+        }
+
+        tripSummary.writeln('');
+      }
+
+      // App signature
+      tripSummary.writeln('Shared via Humsafar App 📱');
+
+      // Share the trip summary
+      await Share.share(
+        tripSummary.toString(),
+        subject: 'My Trip Plan: $_currentTripName',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error sharing trip: $e')),
       );
     }
   }
