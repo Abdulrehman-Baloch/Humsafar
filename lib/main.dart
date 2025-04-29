@@ -6,6 +6,7 @@ import 'util/firebase_options.dart';
 import 'screens/welcome.dart';
 import 'screens/home.dart';
 import 'widgets/navigation/navigation_provider.dart';
+import 'widgets/navigation/weather_provider.dart'; // Import the new provider
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +17,8 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NavigationProvider()),
+        ChangeNotifierProvider(
+            create: (_) => WeatherProvider()), // Add the weather provider
       ],
       child: const MyApp(),
     ),
