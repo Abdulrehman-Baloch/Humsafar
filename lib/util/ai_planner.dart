@@ -22,10 +22,7 @@ class AIPlanner {
     final destinationsText = destinations
         .map((d) =>
             "${d.name} (Rating: ${d.rating}/5): ${d.description} | "
-                "Best time to visit: ${d.ttv ?? 'Year-round'} | " +
-            "Weather: ${d.weather ?? 'Varies seasonally'} | " +
-            "Region: ${d.region ?? 'Not specified'} | " +
-            "Category: ${d.category ?? 'Not specified'}")
+                "Best time to visit: ${d.ttv ?? 'Year-round'} | " "Weather: ${d.weather ?? 'Varies seasonally'} | " "Region: ${d.region ?? 'Not specified'} | " "Category: ${d.category ?? 'Not specified'}")
         .join("\n");
 
     // Create the prompt with focus on Pakistan tourism
@@ -282,7 +279,7 @@ class AIPlanner {
     // If no matching destinations, take some based on high ratings
     if (matchingDestinations.isEmpty) {
       matchingDestinations = destinations
-          .where((d) => d.rating != null && d.rating! >= 4.0)
+          .where((d) => d.rating >= 4.0)
           .toList();
     }
 
@@ -333,8 +330,7 @@ class AIPlanner {
         reasoning =
             "This destination offers the cold climate you're looking for with rich cultural experiences.";
       } else if (textLower.contains('culture') &&
-          dest.description != null &&
-          dest.description!.toLowerCase().contains('culture')) {
+          dest.description.toLowerCase().contains('culture')) {
         reasoning =
             "This destination is known for its rich cultural heritage and traditional experiences.";
       }
