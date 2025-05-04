@@ -20,7 +20,7 @@ class MyListsScreen extends StatefulWidget {
   final String? tripId;
   final String? tripName;
 
-  const MyListsScreen({Key? key, this.tripId, this.tripName}) : super(key: key);
+  const MyListsScreen({super.key, this.tripId, this.tripName});
 
   @override
   State<MyListsScreen> createState() => _MyListsScreenState();
@@ -85,7 +85,7 @@ class _MyListsScreenState extends State<MyListsScreen> {
                 _isLoading = false;
               });
             } else {
-              throw e;
+              rethrow;
             }
           }
         }
@@ -148,7 +148,7 @@ class _MyListsScreenState extends State<MyListsScreen> {
                   allLists.addAll(_processQueryResults(querySnapshot, tripId));
                 }));
               } else {
-                throw e;
+                rethrow;
               }
             }
           }

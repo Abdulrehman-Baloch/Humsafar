@@ -365,7 +365,7 @@ class ShareTripPlan {
                 ...destinations
                     .take(3)
                     .map((destination) => _buildDestinationCard(destination))
-                    .toList(),
+                    ,
 
                 if (destinations.length > 3)
                   Padding(

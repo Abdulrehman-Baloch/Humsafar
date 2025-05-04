@@ -16,8 +16,7 @@ class AppColors {
 class PackingListDetailScreen extends StatefulWidget {
   final PackingList packingList;
 
-  const PackingListDetailScreen({Key? key, required this.packingList})
-      : super(key: key);
+  const PackingListDetailScreen({super.key, required this.packingList});
 
   @override
   State<PackingListDetailScreen> createState() =>
