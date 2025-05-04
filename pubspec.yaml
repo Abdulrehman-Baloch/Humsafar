@@ -33,6 +33,7 @@ dependencies:
   provider: ^6.0.5
   http: ^1.1.0
   flutter_dotenv: ^5.0.2
+  geolocator: ^10.0.0  # For getting user location
   intl: ^0.18.0
   carousel_slider: ^4.1.1
   # The following adds the Cupertino Icons font to your application.
@@ -44,17 +45,31 @@ dependencies:
   cloud_firestore: ^5.6.5
   flutter_rating_bar: ^4.0.1
   cached_network_image: ^3.2.3
+  share_plus: ^10.1.4  # Use the latest version
+  screenshot: ^3.0.0
+  path_provider_android: ^2.2.17
+  path_provider: ^2.1.5
+
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+# Add logs to track important events in the application
+logs:
+  - debug: true
+  - info: true
+  - warning: true
+  - error: true
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

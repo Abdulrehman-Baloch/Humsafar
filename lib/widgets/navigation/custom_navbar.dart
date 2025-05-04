@@ -5,6 +5,8 @@ import '../../screens/bookings/accommodation/find_accommodation.dart';
 import '../../screens/trip/view_trip_plans.dart';
 import '../../screens/bookings/transportation/search_transportation.dart';
 import '../../screens/welcome.dart';
+import '../../screens/lists/my_lists_screen.dart';
+import '../../screens/weather_screen.dart'; // Import the weather screen
 
 class NavigationBar extends StatelessWidget {
   const NavigationBar({super.key});
@@ -30,14 +32,16 @@ class NavigationBar extends StatelessWidget {
                     navigationProvider),
                 _buildNavItem(context, Icons.directions_car,
                     'Find \nTransportation', 3, navigationProvider),
+                _buildNavItem(context, Icons.wb_sunny, 'Weather\nUpdates', 4,
+                    navigationProvider), // Added weather item
               ],
             ),
           ),
           // Logout button at bottom with padding
           Padding(
             padding: const EdgeInsets.only(bottom: 20.0),
-            child: _buildNavItem(
-                context, Icons.logout, 'Logout', 4, navigationProvider),
+            child: _buildNavItem(context, Icons.logout, 'Logout', 5,
+                navigationProvider), // Changed index to 5
           ),
         ],
       ),
@@ -61,6 +65,10 @@ class NavigationBar extends StatelessWidget {
           );
         } else if (index == 1) {
           // Navigate to Lists screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MyListsScreen()),
+          );
         } else if (index == 2) {
           // Navigate to Accommodation search
           Navigator.push(
@@ -74,6 +82,13 @@ class NavigationBar extends StatelessWidget {
               MaterialPageRoute(
                   builder: (context) => SearchTransportationScreen()));
         } else if (index == 4) {
+          // Navigate to Weather screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const WeatherScreen()),
+          );
+        } else if (index == 5) {
+          // Changed from 4 to 5
           Navigator.pushAndRemoveUntil(
             // Navigate to Welcome screen
             context,
