@@ -49,14 +49,17 @@ dependencies:
   screenshot: ^3.0.0
   path_provider_android: ^2.2.17
   path_provider: ^2.1.5
-
+  mocktail: ^1.0.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^5.0.0
-
+  mockito: ^5.4.2
+  fake_cloud_firestore: ^3.1.0
+  build_runner: ^2.4.4
+  test: ^1.22.0
 # Add logs to track important events in the application
 logs:
   - debug: true
