@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../widgets/navigation/weather_provider.dart';
 
 class WeatherScreen extends StatefulWidget {
-  const WeatherScreen({Key? key}) : super(key: key);
+  const WeatherScreen({super.key});
 
   @override
   State<WeatherScreen> createState() => _WeatherScreenState();

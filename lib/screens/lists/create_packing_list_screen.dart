@@ -17,11 +17,11 @@ class CreatePackingListScreen extends StatefulWidget {
   final String? tripName;
 
   const CreatePackingListScreen({
-    Key? key,
+    super.key,
     this.existingList,
     this.tripId,
     this.tripName,
-  }) : super(key: key);
+  });
 
   @override
   State<CreatePackingListScreen> createState() =>
@@ -122,8 +122,9 @@ class _CreatePackingListScreenState extends State<CreatePackingListScreen> {
     if (_itemNameController.text.isNotEmpty &&
         _quantityController.text.isNotEmpty) {
       final quantity = int.tryParse(_quantityController.text) ?? 1;
-      if (quantity <= 0 || quantity > 1000)
+      if (quantity <= 0 || quantity > 1000) {
         return; // Enforce quantity constraints
+      }
 
       setState(() {
         final newItem = PackingItem(
@@ -379,7 +380,7 @@ class _CreatePackingListScreenState extends State<CreatePackingListScreen> {
                             final index = mapEntry.key;
                             final item = mapEntry.value;
                             return _buildItemTile(item, index);
-                          }).toList(),
+                          }),
                           const Divider(height: 1),
                         ],
                       );
