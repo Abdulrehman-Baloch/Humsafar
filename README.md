@@ -37,7 +37,7 @@ Humsafar is an AI-powered trip planner application designed to streamline the tr
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-repo/humsafar.git
+   git clone https://github.com/Abdulrehman-Baloch/Humsafar.git
    cd humsafar
    ```
 
